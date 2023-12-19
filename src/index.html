@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>JPL | ARIA Share</title>
+	<link rel="icon" type="image/svg+xml" href="./images/favicon.svg">
+	<link rel="alternate icon" href="./images/favicon.ico">
+    
+    <!-- Start Single Page Apps for GitHub Pages -->
+    <script type="text/javascript">
+        // Single Page Apps for GitHub Pages
+        // MIT License
+        // https://github.com/rafgraph/spa-github-pages
+        // This script checks to see if a redirect is present in the query string,
+        // converts it back into the correct url and adds it to the
+        // browser's history using window.history.replaceState(...),
+        // which won't cause the browser to attempt to load the new url.
+        // When the single page app is loaded further down in this file,
+        // the correct url will be waiting in the browser's history for
+        // the single page app to route accordingly.
+        (function(l) {
+          if (l.search[1] === '/' ) {
+            var decoded = l.search.slice(1).split('&').map(function(s) { 
+              return s.replace(/~and~/g, '&')
+            }).join('?');
+            window.history.replaceState(null, null,
+                l.pathname.slice(0, -1) + decoded + l.hash
+            );
+          }
+        }(window.location))
+      </script>
+      <!-- End Single Page Apps for GitHub Pages -->    
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg">
+            <div class="container">
+                <!--                 
+                <a class="navbar-brand" href="../../">
+                    S3 Browser
+                </a>
+                -->
+                <div class='brand_area'>
+                    <div class='brand1'>
+                        <a href='https://www.nasa.gov' class='nasa_logo'></a>
+                    </div>
+                    <div class='brand2'>
+                        <div class='jpl_logo'>
+                            <a href='/' id='jpl_logo'>Jet Propulsion Laboratory</a>
+                        </div>
+                        <div class='caltech_logo'>
+                            <a href='/' id='caltech_logo'>California Institute of Technology</a>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <a class="site_logo" href="/" title="home">
+                    ARIA Share
+                    </a>
+                </div>
+                <div>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#preview" aria-controls="preview" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="preview">
+                        <div class="d-flex">
+                            <input class="form-control" type="search" placeholder="Filter..." aria-label="Filter">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <main style="display:none">
+        <div class="container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb"></ol>
+            </nav>
+
+            <!-- START CONTENT -->
+            <div id="commandbar"></div>
+            <div id="files"></div>
+            <div id="footer"></div>
+            <!-- END CONTENT -->
+        </div>    
+    </main>
+    <footer>
+        <div class="container">
+            <nav style="float:left;">
+                <ul>
+                    <li>
+                    <a href='http://www.nasa.gov/' target='_blank'>NASA</a>
+                    </li>
+                    |
+                    <li>
+                    <a href='http://www.caltech.edu/' target='_blank'>Caltech</a>
+                    </li>
+                    |
+                    <li>
+                    <a href='https://www.jpl.nasa.gov/copyrights.php' target='_blank'>Privacy</a>
+                    </li>
+                    |
+                    <li>
+                    <a href='https://www.jpl.nasa.gov/imagepolicy'>Image Policy</a>
+                    </li>
+                    |
+                    <li>
+                    <a href='https://www.jpl.nasa.gov/contact_JPL.php'>Feedback</a>
+                    </li>
+                </ul>
+            </nav>
+            <div class='credits'>
+                <span class='credits_manager'>Site Manager: <a href='mailto:aria@jpl.nasa.gov'>ARIA Team</a></span>
+                <span class='credits_webmaster'>Webmasters: <a href='mailto:vkantchev@jpl.nasa.gov'>V. Kantchev</a></span>
+                <span>CL#20-3814</span>
+            </div>
+        </div>    
+    </footer>    
+</body>
+</html>

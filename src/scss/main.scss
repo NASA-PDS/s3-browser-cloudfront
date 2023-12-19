@@ -1,0 +1,245 @@
+@use 'sass:math';
+
+// see: https://fontawesome.com/docs/web/use-with/scss
+$fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
+
+@import "~@fortawesome/fontawesome-free/scss/fontawesome";
+@import "~@fortawesome/fontawesome-free/scss/regular";
+@import "~@fortawesome/fontawesome-free/scss/solid";
+
+// see: https://getbootstrap.com/docs/5.0/customize/sass/
+@import "~bootstrap/scss/bootstrap";
+
+@import "variables";
+@import "autoindex";
+@import "error";
+
+
+// Positioning:
+// - Default <header>
+// - Sticky <footer>
+// - Remaining height for the <main>
+html,
+body {
+    @extend .h-100;
+}
+
+body {
+    @extend .d-flex;
+    @extend .flex-column;
+
+    >main {
+        @extend .flex-grow-1;
+    }
+
+    >footer {
+        @extend .mt-auto;
+    }
+}
+
+// Navbar customization
+.navbar {
+    @extend #{$s3b-navbar-class} !optional;
+    @extend #{$s3b-navbar-bg-class} !optional;
+
+    // Limit logo height
+    .navbar-brand img {
+        height: $navbar-brand-height;
+    }
+
+    // Put filter to the right
+    .collapse.navbar-collapse>div:only-child {
+        margin-left: auto;
+    }
+}
+
+// Footer customization
+footer>.container {
+    @extend .py-3;
+    @extend .text-center;
+
+    a {
+        @extend .text-muted;
+        @extend .text-decoration-none;
+
+        .fa-heart {
+            @extend .text-danger;
+        }
+    }
+}
+
+// Display the themes on 3 columns
+.dropdown-menu.show[aria-labelledby="themes"] {
+    @extend .d-flex;
+    @extend .flex-wrap;
+
+    @include media-breakpoint-up(lg) {
+        width: 420px;
+    }
+
+    .dropdown-item {
+        width: math.div(1, 3);
+
+        &:first-child {
+            width: 100%;
+        }
+    }
+
+    .dropdown-divider {
+        width: 100%;
+    }
+}
+
+// NASA / JPL branding
+.brand_area {
+    background: url("../images/jpl-branding/logo_nasa_trio_white@2x.png") no-repeat;
+    background-size: 100%;
+    z-index: 300;
+    display: inline-block;
+    width: 250px;
+    height: 56px;
+}
+
+@media (min-width: 600px) {
+    .brand_area {
+        width: 330px;
+        height: 64px;
+    }
+}
+
+@media (min-width: 769px) {
+    .brand_area {
+        margin: 0;
+    }
+}
+
+@media (min-width: 1024px) {
+    .brand_area {
+        width: 362px;
+        height: 68px;
+    }
+}
+
+.brand_area .brand1 {
+    height: 100%;
+    width: 25%;
+    float: left;
+}
+
+.brand_area .brand2 {
+    float: left;
+    width: 75%;
+    height: 100%;
+}
+
+.brand_area .jpl_logo {
+    text-indent: -9999px;
+    width: 100%;
+    float: left;
+    height: 100%;
+}
+
+.brand_area .caltech_logo {
+    display: none;
+}
+
+.brand_area .nasa_logo {
+    text-indent: -9999px;
+}
+
+a#jpl_logo, a#caltech_logo, a.nasa_logo {
+    display: block;
+    height: 100%; 
+}
+
+a.site_logo {
+	font-size: 2.1rem;
+	font-weight: 700;
+	font-family: Helvetica,Arial,sans-serif;
+    text-decoration: none;
+}
+
+a.site_logo,
+a.site_logo:hover { color: white; }
+
+@media (min-width: 100px) {
+    a.site_logo {
+        font-size: 1.2rem;
+    }
+}
+
+@media (min-width: 769px) {
+    a.site_logo {
+        font-size: 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    a.site_logo {
+        font-size: 1.8rem;
+    }
+}
+
+footer {
+    padding: 2em 2em 5em 2em;
+    background-color: black; 
+}
+
+footer nav {
+    text-transform: uppercase;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: .9em;
+    color: #a5a6a7; 
+}
+
+footer nav a {
+    color: #a5a6a7;
+    text-decoration: none; 
+}
+
+footer nav a:hover {
+    color: white; 
+}
+    
+footer nav li {
+    margin: 0 .6em;
+    display: inline;
+    line-height: 2em; 
+}
+    
+footer nav li + li:before {
+    margin-left: .6em; 
+}
+
+footer .credits {
+    color: #a5a6a7;
+    width: 100%;
+    font-size: .9em;
+    text-align: center;
+    position: relative; 
+}
+
+@media (min-width: 769px) {
+    footer .credits {
+        float: right;
+        width: 20%;
+        text-align: left; 
+    }
+}
+
+footer .credits > span {
+    display: block; 
+}
+
+footer .credits a {
+  color: #a5a6a7;
+  text-decoration: none; 
+}
+
+footer .credits a:hover {
+    color: white; 
+}
+
+

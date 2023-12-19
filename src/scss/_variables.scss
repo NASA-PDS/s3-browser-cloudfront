@@ -1,0 +1,16 @@
+.s3b-navbar-bg-black {
+    background: black;
+}
+
+// Allow the navbar to be customized by theme
+$s3b-navbar-class: ".navbar-dark" !default;
+
+// $s3b-navbar-bg-class: ".bg-primary" !default;
+$s3b-navbar-bg-class: ".s3b-navbar-bg-black" !default;
+
+
+// Link customization (no underline unless it is hover)
+$link-decoration:	none !default;
+$link-hover-decoration:	underline !default;
+
+
