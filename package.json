@@ -24,7 +24,7 @@
     "html-loader": "4.2.0",
     "html-webpack-plugin": "5.5.0",
     "http-server": "14.1.1",
-    "mini-css-extract-plugin": "2.7.2",
+    "mini-css-extract-plugin": "2.7.6",
     "postcss-loader": "7.0.2",
     "sass": "1.57.1",
     "sass-loader": "13.2.0",
