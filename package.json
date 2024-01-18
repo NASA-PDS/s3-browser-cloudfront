@@ -18,7 +18,7 @@
     "moment": "2.29.4"
   },
   "devDependencies": {
-    "autoprefixer": "10.4.13",
+    "autoprefixer": "10.4.17",
     "copy-webpack-plugin": "11.0.0",
     "css-loader": "6.7.3",
     "html-loader": "4.2.0",
