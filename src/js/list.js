@@ -3,8 +3,23 @@ import { render } from "./autoindex";
 
 import DOMPurify from 'isomorphic-dompurify';
 
+import {missions, exclude_prefixes} from './missions.js';
+
 var S3BL_IGNORE_PATH = false;
 var BUCKET_URL = 'https://d1z62tir4fw0q0.cloudfront.net';
+
+var SUBDIRS = [];
+$.each( missions, function( key, value ) {
+    SUBDIRS.push(value.Path);
+});
+
+var BUCKET_URL = '';
+$.each( missions, function( key, value ) {
+    if (location.pathname.includes(value.Path)){
+        BUCKET_URL = value.URL;
+    }
+});
+
 
 if (typeof S3BL_IGNORE_PATH == 'undefined' || S3BL_IGNORE_PATH!=true) {
     var S3BL_IGNORE_PATH = false;
@@ -40,23 +55,30 @@ function getS3Data(marker, table) {
         // $('#files').append(h2);
     
         var xml = $(data);
-        var info = getInfoFromS3Data(xml);
-        if (table == null) {
-            table = prepareTable(info);
-        } else {
-            var rows = appendRowstoTbody(info);
-            var tbody = table.children('tbody');
-            tbody.append(rows);
+               var info = getInfoFromS3Data(xml); 
+        if (info.directories.length > 0 || info.files.length > 0) {
+            if (table == null) {
+                table = prepareTable(info);
+            } else {
+                var rows = appendRowstoTbody(info);
+                var tbody = table.children('tbody');
+                tbody.append(rows);
+            }
+            if (info.nextMarker != null) {
+                getS3Data(info.nextMarker, table);
+            } else {
+                $('#files').append(table);
+                sortables_init();
+                render(SUBDIRS);
+            } 
         }
 
-        if (info.nextMarker != "null") {
-            getS3Data(info.nextMarker, table);
-        } else {
+
+        else {
             $('#files').append(table);
             sortables_init();
         }
 
-        render();
     }).fail(function(error) {
         console.error(error);
         $('#files').html('<strong>Error (Code ' + error.status + "): " + error.statusText + '</strong>');
@@ -88,6 +110,16 @@ function createS3QueryUrl(marker) {
     var prefix = '';
     if (S3BL_IGNORE_PATH==false) {
         var prefix = location.pathname.replace(/^\//, S3B_ROOT_DIR);
+        SUBDIRS.some(w => {
+            var path = w.slice(1);
+            if (prefix.includes(path)) {
+                prefix = prefix.replace(path, "");
+            }
+        });  
+        if (exclude_prefixes.includes(prefix)) {
+            prefix = 'error';
+        }
+
     }
 
     var match = search.match(rx);
@@ -101,11 +133,11 @@ function createS3QueryUrl(marker) {
     if (prefix) {
         // make sure we end in /
         prefix = prefix.replace(/\/$/, '') + '/';
-        s3_rest_url += '&prefix=' + encodeURIComponent(prefix);
+        s3_rest_url += '&prefix=' + prefix;
     }
     
     if (marker) {
-        s3_rest_url += '&marker=' + encodeURIComponent(marker);
+        s3_rest_url += '&marker=' + marker;
     }
 
     return s3_rest_url;
@@ -114,7 +146,7 @@ function createS3QueryUrl(marker) {
 function getInfoFromS3Data(xml) {
     var files = $.map(xml.find('Contents'), function(item) {
         item = $(item);
-        if (item.find('Key').text() != 'index.html' && item.find('Key').text() != 'list.js') {
+        if (!exclude_prefixes.includes(item.find('Prefix').text())) {
             return {
                 Key: item.find('Key').text(),
                 LastModified: item.find('LastModified').text(),
@@ -147,7 +179,7 @@ function getInfoFromS3Data(xml) {
         files: files,
         directories: directories,
         prefix: $(xml.find('Prefix')[0]).text(),
-        nextMarker: encodeURIComponent(nextMarker)
+        nextMarker: nextMarker
     }
 }
 
@@ -163,10 +195,21 @@ function appendRowstoTbody(info) {
             if (S3BL_IGNORE_PATH) {
                 item.href = new URL(location.protocol + '//' + location.hostname + location.pathname + '?prefix=' + item.Key).href;
             } else {
-                item.href = item.keyText;
+                var href = $(location).attr("href");
+                
+                const urlObj = new URL(href);
+                urlObj.search = ''; urlObj.hash = '';
+                href = urlObj.href;  
+
+                if (href.substr(href.length - 1) == '/') {
+                    item.href = new URL(href + item.keyText).href;
+                } else {
+                    item.href = new URL(href + '/' + item.keyText).href;
+                }
+
             }
         } else {
-            item.href = BUCKET_URL + '/' + encodeURIComponent(item.Key);
+            item.href = BUCKET_URL + '/' + item.Key;
             item.href = item.href.replace(/%2F/g, '/');
         }
 
@@ -279,7 +322,7 @@ function prepareTable(info) {
                 }
             }
         } else {
-            item.href = BUCKET_URL + '/' + encodeURIComponent(item.Key);
+            item.href = BUCKET_URL + '/' + item.Key;
             item.href = item.href.replace(/%2F/g, '/');
         }
 

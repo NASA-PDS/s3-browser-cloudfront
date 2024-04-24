@@ -242,4 +242,40 @@ footer .credits a:hover {
     color: white; 
 }
 
+.footerLinksTitle {
+    color: #f6f6f6;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.footerLinksSubTitle {
+    color: #959599;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.footerLinks {
+    color: #f6f6f6;
+    font-size: 13px;
+}
+
+p a.footerLinks {
+    color: #f6f6f6 !important;
+    font-size: 13px;
+}
+
+p a.footerLinks:hover {
+    text-decoration: underline !important;
+}
+
+.topContainer {
+    margin-top: 5px;
+}
+
+.navBreadcrumb {
+    display: flex;
+    justify-content: space-between;
+}
+
+
 
