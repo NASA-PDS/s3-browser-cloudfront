@@ -20,7 +20,7 @@ function create_stretched_link(href_url) {
         .addClass("stretched-link");
 }
 
-export function render() {
+export function render(subdir) {
     // Get the search query string
     
     // TODO: ignore search for now
