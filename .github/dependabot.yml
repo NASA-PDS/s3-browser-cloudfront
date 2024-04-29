@@ -8,3 +8,5 @@ updates:
     # Always increase the version requirement
     # to match the new version.
     versioning-strategy: increase
+    groups:
+      patterns: "*"
