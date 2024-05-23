@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "autoprefixer": "10.4.13",
-    "copy-webpack-plugin": "11.0.0",
+    "copy-webpack-plugin": "12.0.2",
     "css-loader": "6.7.3",
     "html-loader": "4.2.0",
     "html-webpack-plugin": "5.5.0",
