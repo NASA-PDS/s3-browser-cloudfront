@@ -45,7 +45,7 @@ function getS3Data(marker, table) {
   var s3_rest_url = createS3QueryUrl(marker);
   
   // set loading notice
-  $('#files').html('<div class="spinner-container"><img class="ajax-load-spinner" src="/index-style/images/explorer/ajaxload-circle.gif"/></div>');
+  $('#files').html('<div class="spinner-container"><img class="ajax-load-spinner" src="' + process.env.PUBLIC_PATH + 'index-style/images/explorer/ajaxload-circle.gif"/></div>');
   $.get(s3_rest_url).done(function(data) {
         // clear loading notice
         $('#files').html('');
@@ -55,7 +55,7 @@ function getS3Data(marker, table) {
         // $('#files').append(h2);
     
         var xml = $(data);
-               var info = getInfoFromS3Data(xml); 
+               var info = getInfoFromS3Data(xml);
         if (info.directories.length > 0 || info.files.length > 0) {
             if (table == null) {
                 table = prepareTable(info);
@@ -111,7 +111,9 @@ function createS3QueryUrl(marker) {
     if (S3BL_IGNORE_PATH==false) {
         var prefix = location.pathname.replace(/^\//, S3B_ROOT_DIR);
         SUBDIRS.some(w => {
-            var path = w.slice(1);
+            var path = process.env.PUBLIC_PATH + w;
+            path = path.slice(1);
+
             if (prefix.includes(path)) {
                 prefix = prefix.replace(path, "");
             }
@@ -374,7 +376,7 @@ function renderTableHeader() {
     var headers = [];
 
     var th_icon = $("<th>", {'class' : 'icon unsortable'});
-    th_icon.html('<img src="/index-style/images/explorer/blank.gif" alt="" height="16" width="16">');
+    th_icon.html('<img src="' + process.env.PUBLIC_PATH + 'index-style/images/explorer/blank.gif" alt="" height="16" width="16">');
     headers.push(th_icon);
 
     var th_name = $("<th>", {'class' : 'name'});
