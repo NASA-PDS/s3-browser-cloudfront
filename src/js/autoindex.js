@@ -50,7 +50,7 @@ export function render(subdir) {
     var path_url = "/" + search;
     var path_urls = [{
         html: create_icon("fa-fw fas fa-home", document.title),
-        url: sanitizeUrl(path_url),
+        url: process.env.PUBLIC_PATH.slice(0,-1) + sanitizeUrl(path_url),
     }];
 
     path_segments.forEach(function(segment) {

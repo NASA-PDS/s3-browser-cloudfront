@@ -21,10 +21,10 @@ import { missions } from './missions.js';
 // Show the <main>
 $("main").show();
 
-if (location.pathname == "/"){ 
+if (location.pathname == process.env.PUBLIC_PATH){
     $.each( missions, function( key, value ) {
         var items = [];
-        $( ".bucketlist").append("<tr class='even'> <th scope='row'><div class='position-relative'><i class='fa-fw fas fa-folder' title='Directory' aria-hidden='true'></i><span class='sr-only'>(Directory)</span><a href='" + value.Path + "' class='stretched-link'></a></div></th><td class='name'> <div class='position-relative'> <a href='" + value.Path + "' class='stretched-link'>" + key + "</a></div></td></tr>" );
+        $( ".bucketlist").append("<tr class='even'> <th scope='row'><div class='position-relative'><i class='fa-fw fas fa-folder' title='Directory' aria-hidden='true'></i><span class='sr-only'>(Directory)</span><a href='" + process.env.PUBLIC_PATH + value.Path + "' class='stretched-link'></a></div></th><td class='name'> <div class='position-relative'> <a href='" + process.env.PUBLIC_PATH + value.Path + "' class='stretched-link'>" + key + "</a></div></td></tr>" );
         });
 }
 

@@ -18,7 +18,7 @@ Version 1.5.8
 */
 
 /* You can change these values */
-var image_path = "/index-style/images/sort-table/";
+var image_path = process.env.PUBLIC_PATH + "index-style/images/sort-table/";
 var image_up = "arrow-up.gif"; /* sort up */
 var image_down = "arrow-down.gif"; /* sort down */
 var image_none = "arrow-none.gif"; /* this is added to any column header that the table is not currently sorted by */
