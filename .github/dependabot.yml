@@ -18,3 +18,20 @@ updates:
           patterns:
             - "*"       # A wildcard that matches all dependencies in the package
                         # ecosystem. Note: using "*" may open a large pull request
+  - package-ecosystem: "github-actions" # See documentation for possible values
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "weekly"
+    target-branch: "develop"
+
+  - package-ecosystem: "docker" # See documentation for possible values
+    directory: "/docker/" # Location of package manifests
+    schedule:
+      interval: "weekly"
+    target-branch: "develop"
+
+  - package-ecosystem: "terraform" # See documentation for possible values
+    directory: "/terraform/" # Location of package manifests
+    schedule:
+      interval: "weekly"
+    target-branch: "develop"
