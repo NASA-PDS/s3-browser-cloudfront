@@ -46,6 +46,6 @@ jobs:
                 name: 🩺 Test Software
                 run:
                     npm clean-install
-                    npm test
+                    npm test --if-present
 
 ...
