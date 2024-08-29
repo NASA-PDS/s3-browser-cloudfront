@@ -2,10 +2,6 @@ export const missions = {
     "catalina-sky-survey" : {
         "Path": "catalina-sky-survey/",
         "URL": "https://pds-css-archive.s3.us-west-2.amazonaws.com"
-    },
-    "aria-share" : {
-        "Path": "aria-share/",
-        "URL": "https://d1z62tir4fw0q0.cloudfront.net"
     }
 };
 
