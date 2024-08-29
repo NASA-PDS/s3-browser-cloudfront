@@ -1,0 +1,51 @@
+# 🏃‍♀️ Continuous Integration and Delivery: Branch Testing
+# ======================================================
+
+
+---
+
+name: 🔁 Branch integration testing
+
+
+# Driving Event
+# -------------
+#
+# What event starts this workflow: a push to any branch other than main
+
+on:
+    push:
+        branches:
+            -   '**'
+            -   '!main'
+
+
+# What to Do
+# ----------
+#
+# Test the software with tox
+
+jobs:
+    branch-testing:
+        name: 🪵 Branch Testing
+        runs-on: ubuntu-latest
+        if: github.actor != 'pdsen-ci'
+        steps:
+            -
+                name: 💳 Checkout
+                uses: actions/checkout@v3
+                with:
+                    lfs: true
+                    fetch-depth: 0
+                    token: ${{secrets.ADMIN_GITHUB_TOKEN || github.token}}
+            -
+                name: 🟢 Setup up Node
+                uses: actions/setup-node@v4
+                with:
+                    node-version: 'latest'
+            -
+                name: 🩺 Test Software
+                run:
+                    npm clean-install
+                    npm test
+
+...
