@@ -1,5 +1,5 @@
 export const missions = {
-    "catalina-sky-survey" : {
+    "open-data-registry" : {
         "Path": "open-data-registry/",
         "URL": "https://pds-css-archive.s3.us-west-2.amazonaws.com"
     }
