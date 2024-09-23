@@ -32,11 +32,11 @@ jobs:
         steps:
             -
                 name: 💳 Checkout
-                uses: actions/checkout@v4
+                uses: actions/checkout@v3
                 with:
                     lfs: true
                     fetch-depth: 0
-                    token: ${{secrets.ADMIN_GITHUB_TOKEN || github.token}}
+                    token: ${{secrets.ADMIN_GITHUB_TOKEN}}
             -
                 name: 🟢 Setup up Node
                 uses: actions/setup-node@v4
@@ -46,6 +46,6 @@ jobs:
                 name: 🩺 Test Software
                 run:
                     npm clean-install
-                    npm test --if-present
+                    npm test
 
 ...
