@@ -1,5 +1,6 @@
 const path = require('path');
 
+const webpack = require("webpack")
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CopyWebPackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
@@ -22,12 +23,15 @@ module.exports = (env) => {
             new HtmlWebpackPlugin({
                 template: 'src/index.html',
                 filename: 'index.html'
-            })            
+            }) ,
+            new webpack.EnvironmentPlugin({
+                PUBLIC_PATH: '/data/',
+            })        
         ],
         output: {
             filename: 'index-style/js/main.js',
             path: buildPath,
-            publicPath: '/'
+            publicPath: '/data/'
         },
         devtool: "source-map",
         devServer: {
