@@ -2,7 +2,7 @@ try {
     const referrer = document.referrer;
     if (referrer) {
         const referrerUrl = new URL(referrer);
-        const currentOrigin = window.location.origin;
+        const currentOrigin = globalThis.location.origin;
         // Only allow same-origin referrers and only those with http/https
         if ((referrerUrl.protocol === 'http:' || referrerUrl.protocol === 'https:')
             && referrerUrl.origin === currentOrigin) {
@@ -13,7 +13,7 @@ try {
     } else {
         $(".card a.btn").attr("href", '/');
     }
-} catch (ex) {
+} catch {
     // Invalid URL: use safe fallback of /
     $(".card a.btn").attr("href", '/');
 }
