@@ -1,11 +1,19 @@
-// Configure the Back button href
-const sanitizeUrl = (url) => {
-  try {
-    const parsed = new URL(url);
-    return parsed.origin + parsed.pathname;
-  } catch (e) {
-    return '/';
-  }
-};
-
-$(".card a.btn").attr("href", sanitizeUrl(document.referrer));
+try {
+    const referrer = document.referrer;
+    if (referrer) {
+        const referrerUrl = new URL(referrer);
+        const currentOrigin = window.location.origin;
+        // Only allow same-origin referrers and only those with http/https
+        if ((referrerUrl.protocol === 'http:' || referrerUrl.protocol === 'https:')
+            && referrerUrl.origin === currentOrigin) {
+            $(".card a.btn").attr("href", referrer);
+        } else {
+            $(".card a.btn").attr("href", '/');
+        }
+    } else {
+        $(".card a.btn").attr("href", '/');
+    }
+} catch (ex) {
+    // Invalid URL: use safe fallback of /
+    $(".card a.btn").attr("href", '/');
+}
