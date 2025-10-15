@@ -69,6 +69,7 @@ var/
 *.swp
 bin/
 typescript
+.vscode
 
 # macOS specific stuff
 .DS_Store
