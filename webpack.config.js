@@ -38,7 +38,15 @@ module.exports = (env) => {
             static: buildPath,
             port: 8080,
             hot: true,
-            historyApiFallback: true,
+            historyApiFallback: {
+                index: '/data/index.html'
+            },
+            proxy: [{
+                context: ['/s3data'],
+                target: 'https://pds-sit.mcp.nasa.gov',
+                changeOrigin: true,
+                secure: true
+            }],
         },
         module: {
             rules: [

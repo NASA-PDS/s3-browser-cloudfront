@@ -6,7 +6,6 @@ import DOMPurify from 'isomorphic-dompurify';
 import {missions, exclude_prefixes} from './missions.js';
 
 var S3BL_IGNORE_PATH = false;
-var BUCKET_URL = 'https://d1z62tir4fw0q0.cloudfront.net';
 
 var SUBDIRS = [];
 $.each( missions, function( key, value ) {
@@ -14,9 +13,11 @@ $.each( missions, function( key, value ) {
 });
 
 var BUCKET_URL = '';
+var S3_PREFIX = '';
 $.each( missions, function( key, value ) {
     if (location.pathname.includes(value.Path)){
         BUCKET_URL = value.URL;
+        S3_PREFIX = value.Prefix || '';
     }
 });
 
@@ -122,6 +123,9 @@ function createS3QueryUrl(marker) {
             prefix = 'error';
         }
 
+        if (prefix !== 'error') {
+            prefix = S3_PREFIX + prefix;
+        }
     }
 
     var match = search.match(rx);
@@ -403,7 +407,7 @@ function renderRow(item) {
         src = 'data:,';
     }
 
-    const urlObj = new URL(item.href);
+    const urlObj = new URL(item.href, window.location.origin);
     urlObj.search = ''; urlObj.hash = '';
     const item_href = urlObj.href;      
 

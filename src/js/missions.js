@@ -2,6 +2,11 @@ export const missions = {
     "open-data-registry" : {
         "Path": "open-data-registry/",
         "URL": "https://pds-css-archive.s3.us-west-2.amazonaws.com"
+    },
+    "lroc" : {
+        "Path": "lroc/",
+        "URL": "/s3data",
+        "Prefix": "lroc/"
     }
 };
 
