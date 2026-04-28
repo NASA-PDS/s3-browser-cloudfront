@@ -23,4 +23,4 @@ For everyday use see [work on macOS](./docs/work-mac.md)
   * Set the `missions` variable so that it each entry contains a `url` key for the CloudFront URL and the `path` key indicating which CF behavior (origin server -> bucket) the entry should reference.
   * Set the `exclude_prefixes` array so that any prefixes that shouldn't be included are ommitted from the directory listing
 2. Update CloudFront origin and behaviors
-3. Create/Update Cognito
+3. Create/Update Cognito (optional?)
