@@ -396,7 +396,7 @@ function renderRow(item) {
     const item_href = urlObj.href;      
 
     var td_icon = $("<td>", {'class' : 'name', 'valign' : 'top'});
-    var clean = DOMPurify.sanitize('<a href="' + item_href + '"><img src="' + src + '" alt="' + alt + '" height="16" width="16"</a>');
+    var clean = DOMPurify.sanitize('<a href="' + item_href + '"><img src="' + src + '" alt="' + alt + '" height="16" width="16"></a>');
     td_icon.html(clean);
     records.push(td_icon);
 
