@@ -16,7 +16,7 @@ $.each( missions, function( key, value ) {
  * Base URL that always serves the app (S3/CloudFront without static hosting requires index.html in path).
  */
 export function getAppBaseUrl() {
-    const origin = location.protocol + '//' + location.hostname;
+    const origin = location.protocol + '//' + location.host;
     const basePath = (process.env.PUBLIC_PATH || '/').replace(/\/$/, '');
     return origin + basePath + '/index.html';
 }
@@ -65,10 +65,6 @@ resolveBucketUrl();
 
 if (typeof S3BL_IGNORE_PATH == 'undefined' || S3BL_IGNORE_PATH!=true) {
     var S3BL_IGNORE_PATH = false;
-}
-
-if (typeof BUCKET_URL == 'undefined') {
-    var BUCKET_URL = new URL(location.protocol + '//' + location.hostname).href;
 }
 
 if (typeof BUCKET_NAME != 'undefined') {
