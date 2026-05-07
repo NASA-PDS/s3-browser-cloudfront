@@ -13,7 +13,7 @@ The deployment has two distinct layers that can be protected independently or to
 | **Interface** | The SPA (HTML/JS/CSS) served via the app CloudFront distribution | Public |
 | **S3 Objects (Data)** | The actual PDS files served via data CloudFront distribution(s) | Public |
 
-The app makes **direct browser requests** to data CloudFront URLs (defined in `src/js/missions.js`). This means:
+The app makes **direct browser requests** to data CloudFront URLs (defined in `src/js/bucketEndpoints.js`). This means:
 - Protecting only the interface still leaves data URLs reachable if someone discovers them
 - Protecting only the data means the directory browser is public but file downloads require auth — which requires careful UX handling (see Scenario 2 below)
 

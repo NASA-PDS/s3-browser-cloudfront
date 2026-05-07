@@ -16,11 +16,11 @@ import * as bootstrap from 'bootstrap';
 import './utils';
 import './error';
 
-import { missions } from './missions.js';
+import { bucketEndpoints } from './bucketEndpoints.js';
 import getS3Data, { getAppBaseUrl, getCurrentPath, getMissionMatchForPath } from './list';
 
 var SUBDIRS = [];
-$.each( missions, function( key, value ) {
+$.each( bucketEndpoints, function( key, value ) {
     SUBDIRS.push(value.Path);
 });
 
@@ -65,7 +65,7 @@ function renderBucketList() {
         '<tbody class="bucketlist"></tbody>' +
         '</table></nav></div>'
     );
-    $.each( missions, function( key, value ) {
+    $.each( bucketEndpoints, function( key, value ) {
         var href = getAppBaseUrl() + '#/' + value.Path;
         $( ".bucketlist").append(
             "<tr class='even'><th scope='row'><div class='position-relative'>" +

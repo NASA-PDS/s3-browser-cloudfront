@@ -23,7 +23,7 @@
  *
  * @type {Object.<string, MissionEntry>}
  */
-export const missions = {
+export const bucketEndpoints = {
     "open-data-registry" : {
         "Path": "open-data-registry/",
         "URL": "https://pds-css-archive.s3.us-west-2.amazonaws.com"
