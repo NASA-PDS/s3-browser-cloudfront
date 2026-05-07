@@ -58,4 +58,17 @@
 	thead th:not(:first-child) {
 		padding-left: 2 * $table-cell-padding-x;
 	}
+
+	// Sortable headers: align label + icon; gap without &nbsp;
+	&.sortable a.sortheader {
+		display: inline-flex;
+		align-items: center;
+		column-gap: 0.35em;
+	}
+
+	&.sortable a.sortheader .sortarrow {
+		display: flex;
+		align-items: center;
+		line-height: 0;
+	}
 }

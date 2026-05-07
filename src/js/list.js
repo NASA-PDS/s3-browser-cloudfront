@@ -454,11 +454,11 @@ function renderTableHeader() {
     headers.push(th_name);
 
     var th_modified = $("<th>", {'class' : 'date'});
-    th_modified.html('Last Modified&nbsp;&nbsp;');
+    th_modified.html('Last Modified');
     headers.push(th_modified);
 
     var th_size = $("<th>", {'class' : 'size'});
-    th_size.html('Size&nbsp;&nbsp;');
+    th_size.html('Size');
     headers.push(th_size);
 
     return headers;
