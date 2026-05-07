@@ -112,3 +112,6 @@ terraform.rc
 
 # Ignore contents of dist directory
 dist/
+
+# Webpack development output (avoids serving raw src/index.html over generated HTML)
+.webpack-dev/

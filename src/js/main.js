@@ -47,7 +47,13 @@ $("main").show();
 function isAtAppRoot() {
     var pathname = location.pathname;
     var base = (process.env.PUBLIC_PATH || '/').replace(/\/$/, '');
-    if (pathname !== base && pathname !== base + '/index.html') return false;
+    var atConfiguredBase =
+        pathname === base ||
+        pathname === base + '/' ||
+        pathname === base + '/index.html';
+    // Local dev: page is often served at / or /index.html while PUBLIC_PATH still matches deploy (e.g. /s3app-an/).
+    var atDevServerRoot = pathname === '/' || pathname === '/index.html';
+    if (!atConfiguredBase && !atDevServerRoot) return false;
     var hash = (location.hash || '').replace(/^#\/?/, '');
     return !hash;
 }
