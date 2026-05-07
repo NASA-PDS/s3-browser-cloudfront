@@ -41,7 +41,62 @@ export function getCurrentPath() {
     return p;
 }
 
+/** Normalize browse paths so prefix checks are consistent (leading slashes trimmed, trailing slash added). */
+export function normalizeBrowsePath(p) {
+    if (!p) return '';
+    var s = String(p).replace(/^\/+/, '');
+    if (!s.endsWith('/')) {
+        s += '/';
+    }
+    return s;
+}
+
+/**
+ * Longest Path-prefix mission matching currentPath (hash or pathname browse segment).
+ */
+export function getMissionMatchForPath(currentPathRaw) {
+    var norm = normalizeBrowsePath(currentPathRaw);
+    var best = null;
+    var bestLen = -1;
+    $.each(missions, function(key, value) {
+        var mp = normalizeBrowsePath(value.Path);
+        if (!mp) return;
+        if (norm === mp || norm.indexOf(mp) === 0) {
+            if (mp.length > bestLen) {
+                bestLen = mp.length;
+                best = { key: key, value: value };
+            }
+        }
+    });
+    return best;
+}
+
+/**
+ * Parent browse path for hash routing, or null when leaving mission root (→ bucket list).
+ */
+function getBrowseParentPath(currentPathRaw) {
+    var cur = normalizeBrowsePath(currentPathRaw);
+    var match = getMissionMatchForPath(currentPathRaw);
+    if (match) {
+        var mp = normalizeBrowsePath(match.value.Path);
+        if (cur === mp) {
+            return null;
+        }
+        var rel = cur.slice(mp.length).replace(/\/$/, '');
+        var relParts = rel.split('/').filter(Boolean);
+        relParts.pop();
+        var newRel = relParts.length ? relParts.join('/') + '/' : '';
+        return mp.replace(/\/$/, '') + '/' + newRel;
+    }
+    var parts = cur.replace(/\/$/, '').split('/').filter(Boolean);
+    parts.pop();
+    return parts.length ? parts.join('/') + '/' : '';
+}
+
 var BUCKET_URL = '';
+
+/** Mission entry matching the current route (set in resolveBucketUrl). */
+var CURRENT_MISSION = null;
 
 /**
  * (Re-)determine the bucket URL for the current browse path.
@@ -49,16 +104,31 @@ var BUCKET_URL = '';
  * so that hash-based navigation (no full page reload) always uses the right bucket.
  */
 function resolveBucketUrl() {
-    var url = '';
-    $.each(missions, function(key, value) {
-        if (getCurrentPath().includes(value.Path) || location.pathname.includes(value.Path)) {
-            // Include the mission path as a URL path segment so that S3 keys
-            // returned by the API are relative to this base
-            // (e.g. "A/PIA24937.jpg" rather than "peer-review-data/A/PIA24937.jpg").
-            url = value.URL.replace(/\/$/, '') + '/' + value.Path.replace(/\/$/, '');
-        }
-    });
-    BUCKET_URL = url;
+    CURRENT_MISSION = null;
+    BUCKET_URL = '';
+    var cp = getCurrentPath();
+    var match = getMissionMatchForPath(cp);
+    if (!match) {
+        $.each(missions, function(key, value) {
+            var needle = value.Path.replace(/\/$/, '');
+            if (needle && location.pathname.indexOf(needle) >= 0) {
+                var candLen = normalizeBrowsePath(value.Path).length;
+                if (!match || candLen > normalizeBrowsePath(match.value.Path).length) {
+                    match = { key: key, value: value };
+                }
+            }
+        });
+    }
+    if (!match) {
+        return;
+    }
+    CURRENT_MISSION = match.value;
+    var appendPath = match.value.appendPathToUrl !== false;
+    if (appendPath) {
+        BUCKET_URL = match.value.URL.replace(/\/$/, '') + '/' + match.value.Path.replace(/\/$/, '');
+    } else {
+        BUCKET_URL = match.value.URL.replace(/\/$/, '');
+    }
 }
 resolveBucketUrl();
 
@@ -128,26 +198,36 @@ function getS3Data(marker, table) {
 }
 
 function createS3QueryUrl(marker) {
-    // BUCKET_URL already contains the mission path (e.g. https://cdn.example.com/peer-review-data).
-    // Strip that mission path from getCurrentPath() to get only the sub-path
-    // relative to the mission base, which is what S3 expects as the ?prefix= value.
-    // e.g. getCurrentPath() = "peer-review-data/"    → prefix = ""  → .../peer-review-data/?delimiter=/
-    //      getCurrentPath() = "peer-review-data/A/"  → prefix = "A/" → .../peer-review-data/?delimiter=/&prefix=A/
+    // CloudFront: BUCKET_URL contains the mission path; optional &prefix= is only for deeper folders.
+    // Direct S3 bucket: BUCKET_URL is the bucket origin; mission Path + subfolders go in &prefix=.
     var s3_rest_url = BUCKET_URL.replace(/\/$/, '') + '/?delimiter=/';
 
     var currentPath = getCurrentPath();
     if (currentPath && !currentPath.endsWith('/')) currentPath += '/';
 
     var relativePrefix = currentPath;
-    $.each(missions, function(key, value) {
-        if (currentPath.indexOf(value.Path) === 0) {
-            relativePrefix = currentPath.slice(value.Path.length);
+    if (CURRENT_MISSION) {
+        var mp = CURRENT_MISSION.Path;
+        if (currentPath.indexOf(mp) === 0) {
+            relativePrefix = currentPath.slice(mp.length);
         }
-    });
+    }
 
-    if (relativePrefix) {
-        relativePrefix = relativePrefix.replace(/\/$/, '') + '/';
-        s3_rest_url += '&prefix=' + relativePrefix;
+    var prefixParam = '';
+    if (CURRENT_MISSION && CURRENT_MISSION.appendPathToUrl === false) {
+        var missionPrefix = CURRENT_MISSION.Path.replace(/\/$/, '');
+        if (relativePrefix) {
+            var rel = relativePrefix.replace(/\/$/, '');
+            prefixParam = missionPrefix + '/' + rel + '/';
+        } else {
+            prefixParam = missionPrefix + '/';
+        }
+    } else if (relativePrefix) {
+        prefixParam = relativePrefix.replace(/\/$/, '') + '/';
+    }
+
+    if (prefixParam) {
+        s3_rest_url += '&prefix=' + prefixParam;
     }
 
     if (marker) {
@@ -257,9 +337,15 @@ function prepareTable(info) {
     if (prefix) {
         var up = prefix.replace(/\/$/, '').split('/').slice(0, -1).concat('').join('/'); // one directory up (stripped)
 
-        var parentPath = currentPathFull.replace(/\/$/, '').split('/').slice(0, -1).join('/');
-        if (parentPath) parentPath += '/';
-        var parentHref = S3BL_IGNORE_PATH ? '?prefix=' + up : getAppBaseUrl() + '#/' + parentPath;
+        var parentBrowse = getBrowseParentPath(currentPathFull);
+        var parentHref;
+        if (S3BL_IGNORE_PATH) {
+            parentHref = '?prefix=' + up;
+        } else if (parentBrowse === null) {
+            parentHref = getAppBaseUrl() + '#/';
+        } else {
+            parentHref = getAppBaseUrl() + '#/' + parentBrowse;
+        }
         var item = {
             Key: up,
             LastModified: '',

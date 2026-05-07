@@ -1,7 +1,7 @@
 import moment from 'moment';
 
 import {sanitizeUrl} from '@braintree/sanitize-url';
-import { getAppBaseUrl, getCurrentPath } from './list';
+import { getAppBaseUrl, getCurrentPath, getMissionMatchForPath, normalizeBrowsePath } from './list';
 
 // Create a screen reader friendly icon
 function create_icon(classes, title) {
@@ -44,16 +44,28 @@ export function render(subdir) {
     //// Configure the <nav .breadcrumb>
     ////
 
-    // Get the path segments from current path (hash or pathname) so breadcrumbs work with index.html#/ routing
+    // Breadcrumbs: mission Path from missions.js is the logical "/"; only segments below it are shown.
     const currentPath = getCurrentPath();
-    const path_segments = currentPath ? currentPath.replace(/\/$/, '').split("/").filter(Boolean) : [];
+    const mission = getMissionMatchForPath(currentPath);
+    var crumbTail = currentPath;
+    if (mission) {
+        var normCur = normalizeBrowsePath(currentPath);
+        var normMp = normalizeBrowsePath(mission.value.Path);
+        crumbTail = normCur === normMp ? '' : normCur.slice(normMp.length);
+    }
+    const path_segments = crumbTail ? crumbTail.replace(/\/$/, '').split("/").filter(Boolean) : [];
+
+    var missionHomeHash = '';
+    if (mission) {
+        missionHomeHash = '#/' + normalizeBrowsePath(mission.value.Path).replace(/^\/+/, '');
+    }
 
     var path_urls = [{
         html: create_icon("fa-fw fas fa-home", document.title),
-        url: getAppBaseUrl() + (path_segments.length ? '#/' : ''),
+        url: mission ? getAppBaseUrl() + missionHomeHash : getAppBaseUrl() + (path_segments.length ? '#/' : ''),
     }];
 
-    var pathSoFar = '';
+    var pathSoFar = mission ? normalizeBrowsePath(mission.value.Path).replace(/^\/+/, '') : '';
     path_segments.forEach(function(segment) {
         pathSoFar += segment + "/";
         path_urls.push({

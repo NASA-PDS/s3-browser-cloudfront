@@ -17,7 +17,7 @@ import './utils';
 import './error';
 
 import { missions } from './missions.js';
-import getS3Data, { getAppBaseUrl, getCurrentPath } from './list';
+import getS3Data, { getAppBaseUrl, getCurrentPath, getMissionMatchForPath } from './list';
 
 var SUBDIRS = [];
 $.each( missions, function( key, value ) {
@@ -82,7 +82,7 @@ function handleRoute() {
     if (isAtAppRoot()) {
         $('.breadcrumb').html('');
         renderBucketList();
-    } else if (SUBDIRS.some(function(w) { return getCurrentPath().includes(w); })) {
+    } else if (getMissionMatchForPath(getCurrentPath())) {
         $('.breadcrumb').html('');
         $('#files').html('');
         getS3Data();

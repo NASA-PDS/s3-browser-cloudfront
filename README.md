@@ -131,8 +131,9 @@ Use the version in [`.nvmrc`](./.nvmrc). Install [Node.js](https://nodejs.org) d
   * **S3**: OAI/OAC grants **s3:GetObject** (and **s3:ListBucket** on the data bucket where listing applies); **block all public access** on app and data buckets.
 6. In `webpack.config.js`, find `new webpack.EnvironmentPlugin` and set `PUBLIC_PATH` to the path where the app will be hosted (default `/data/`).
 7. Edit `./src/js/missions.js`:
-  * **`missions`**: Each object key is the mission label in the UI. Each value needs `URL` (CloudFront base, e.g. `https://d1234567890abc.cloudfront.net`) and `Path` (data behavior URL prefix, usually with a trailing `/`, matching CloudFront).
-  * **`exclude_prefixes`**: Prefixes to omit from directory listings.
+  * **`missions`**: Each object key is the mission label in the UI (bucket list and links). Each value needs **`URL`** (origin base for listing requests—typically your CloudFront hostname, e.g. `https://d1234567890abc.cloudfront.net`, or an S3 REST endpoint) and **`Path`** (data behavior URL prefix / logical S3 prefix, usually with a trailing `/`, consistent with CloudFront and routing).
+  * **`appendPathToUrl`** (optional on each mission): Defaults to `true`. When `true`, the app requests listings at `URL` with `Path` appended as URL path segments (typical CloudFront behavior URL). When `false`, the app uses `URL` as-is and sends `Path` (and subfolders) via the `prefix` query parameter instead—useful for virtual-hosted–style S3 URLs where the bucket hostname is already in `URL`.
+  * **`exclude_prefixes`**: Prefix strings to omit from file rows in directory listings (see `missions.js` for the export used by the listing code).
 8. Run `npm run build` and upload `dist/` to the app bucket.
 
 **Note**: Prefer `npm ci` for installs from a locked tree. Use `npm install` only when you intend to change dependency versions in `package.json`.
