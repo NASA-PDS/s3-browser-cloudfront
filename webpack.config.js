@@ -6,8 +6,6 @@ const CopyWebPackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = (env = {}) => {
-    // In development, never use `src` as devServer.static + output.path: the raw
-    // `src/index.html` would be served instead of HtmlWebpackPlugin output (no JS/CSS injected).
     const isProd = Boolean(env.production);
     const outputDir = isProd
         ? path.resolve(__dirname, 'dist')
@@ -15,60 +13,75 @@ module.exports = (env = {}) => {
 
     return {
         entry: './src/js/main.js',
+
         plugins: [
             new MiniCssExtractPlugin({
                 filename: 'index-style/css/main.css'
             }),
+
             new CopyWebPackPlugin({
                 patterns: [
                     { from: "src/images", to: "index-style/images" },
                     { from: "src/404.html", to: "" },
+                    { from: "node_modules/@fortawesome/fontawesome-free/webfonts", to: "webfonts" }
                 ],
-            }),        
+            }),
+
             new HtmlWebpackPlugin({
                 template: 'src/index.html',
                 filename: 'index.html'
-            }) ,
+            }),
+
             new webpack.EnvironmentPlugin({
                 PUBLIC_PATH: '/data/',
-            })        
+            })
         ],
+
         output: {
             filename: 'index-style/js/main.js',
             path: outputDir,
             publicPath: '/data/'
         },
+
         devtool: "source-map",
+
         devServer: {
             static: isProd
                 ? false
                 : [
-                      {
-                          directory: path.join(__dirname, 'src/images'),
-                          publicPath: '/images',
-                      },
-                  ],
-            port: 8080,
+                    {
+                        directory: path.join(__dirname, 'src/images'),
+                        publicPath: '/images',
+                    },
+                ],
+            port: 9002,
             hot: true,
-            // Must match output.publicPath so `/` serves HtmlWebpackPlugin output (default `/index.html` 404s).
+
             historyApiFallback: {
                 index: '/data/index.html',
             },
+
+            // 🔥 Prevent warning overlays from blocking your app
+            client: {
+                overlay: {
+                    errors: true,
+                    warnings: false
+                }
+            }
         },
+
         module: {
             rules: [
+                // Font files (Font Awesome)
                 {
-                    test: /\.(woff(2)?|eot|ttf|otf|svg|)$/,
-                    type: 'asset',   // <-- Assets module - asset
-                    parser: {
-                      dataUrlCondition: {
-                        maxSize: 8 * 1024 // 8kb
-                      }
-                    },
-                    generator: {  //If emitting file, the file path is
-                      filename: 'index-style/fonts/[hash][ext][query]'
+                    test: /\.(woff2?|eot|ttf|otf)$/i,
+                    type: "asset/resource",
+                    generator: {
+                        filename: "webfonts/[name][ext]"
                     }
-                },                   
+                },
+
+                // Inline SVG and SVG resources
                 {
                     mimetype: 'image/svg+xml',
                     scheme: 'data',
@@ -77,46 +90,49 @@ module.exports = (env = {}) => {
                         filename: 'index-style/icons/[hash].svg'
                     }
                 },
+
+                // Images
                 {
                     test: /\.(?:ico|gif|png|jpg|jpeg)$/i,
-                    type: 'asset/resource',  //<-- Assets module - asset/resource
+                    type: 'asset/resource',
                     generator: {
-                      filename: 'index-style/images/[hash][ext][query]'
+                        filename: 'index-style/images/[hash][ext][query]'
                     }
-                },                
+                },
+
+                // SCSS Pipeline
                 {
                     test: /\.(scss)$/,
                     use: [
-                        {
-                            loader: MiniCssExtractPlugin.loader          
-                        },
-                        {
-                            loader: 'css-loader'
-                        },
+                        MiniCssExtractPlugin.loader,
+                        'css-loader',
                         {
                             loader: 'postcss-loader',
                             options: {
                                 postcssOptions: {
-                                    plugins: () => [
-                                    require('autoprefixer')
-                                    ]
+                                    plugins: () => [require('autoprefixer')]
                                 }
                             }
                         },
+
+                        // 🔥 Suppress Bootstrap / FontAwesome Deprecation Warnings
                         {
-                            loader: 'sass-loader'
+                            loader: 'sass-loader',
+                            options: {
+                                sassOptions: {
+                                    quietDeps: true
+                                }
+                            }
                         }
                     ]
                 },
+
+                // HTML loader
                 {
                     test: /\.html$/,
-                    use: [
-                      {
-                        loader: 'html-loader'
-                      }
-                    ]
-                  }
+                    use: ['html-loader']
+                }
             ]
-        },
+        }
     }
 }

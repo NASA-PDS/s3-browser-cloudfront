@@ -1,29 +1,31 @@
+@use "bootstrap" as b;
+
 main > .container {
-	@extend .h-100;
-	@extend .d-flex;
-	@extend .flex-column;
+    @extend .h-100;
+    @extend .d-flex;
+    @extend .flex-column;
 }
 
 .card {
-	@extend .border-primary;
+    @extend .border-primary;
 
-	@include media-breakpoint-up(lg) {
-		width: 540px;
-		margin: auto;
-	}
+    @include b.media-breakpoint-up(lg) {
+        width: 540px;
+        margin: auto;
+    }
 
-	@include media-breakpoint-down(lg) {
-		align-items: stretch;
-		margin: auto 0;
-	}
+    @include b.media-breakpoint-down(lg) {
+        align-items: stretch;
+        margin: auto 0;
+    }
 
-	.card-body {
-		width: 100%;
+    .card-body {
+        width: 100%;
 
-		@extend .text-center;
+        @extend .text-center;
 
-		.btn {
-			@extend .btn-primary;
-		}
-	}
+        .btn {
+            @extend .btn-primary;
+        }
+    }
 }

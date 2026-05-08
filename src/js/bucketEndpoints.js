@@ -23,10 +23,12 @@
  *
  * @type {Object.<string, MissionEntry>}
  */
+
 export const bucketEndpoints = {
-    "open-data-registry" : {
-        "Path": "open-data-registry/",
-        "URL": "https://pds-css-archive.s3.us-west-2.amazonaws.com"
+    "Catalina Sky Survey": {
+        "Path": "sbn/gbo.ast.catalina.survey/",
+        "URL": "https://pds-css-archive.s3.us-west-2.amazonaws.com",
+        "appendPathToUrl": false
     }
 };
 

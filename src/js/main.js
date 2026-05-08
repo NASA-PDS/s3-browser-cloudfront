@@ -76,7 +76,7 @@ function renderBucketList() {
         $( ".bucketlist").append(
             "<tr class='even'><th scope='row'><div class='position-relative'>" +
             "<i class='fa-fw fas fa-folder' title='Directory' aria-hidden='true'></i>" +
-            "<span class='sr-only'>(Directory)</span>" +
+            "<span class='visually-hidden'>(Directory)</span>" +
             "<a href='" + href + "' class='stretched-link'></a></div></th>" +
             "<td class='name'><div class='position-relative'>" +
             "<a href='" + href + "' class='stretched-link'>" + key + "</a></div></td></tr>"
