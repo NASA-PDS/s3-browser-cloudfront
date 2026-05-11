@@ -88,8 +88,9 @@ Use the version in [`.nvmrc`](./.nvmrc). Install [Node.js](https://nodejs.org) d
 
 ### Data Bucket
 
-1. Create or reuse a bucket that will store the data that the s3 browser will allow users to browse.
+1. Create or reuse a bucket that will store the data that the s3 browser will allow users to browse. This bucket can be in the EN venue account or in a Node's Venue account.
 2. Create CloudFront Origin Server that references the bucket in the previous step noting that:
+    * **Note**: if referencing a bucket that is in _another_ AWS account, be sure to use the fully qualified domain URL in the `origin domain` field.
     * Origin Access — Select "Origin access control settings (recommended)"
     * Create (or reuse) an "Origin access control" that matches the settings below and reference it:
         * Name: Name this OAC appropriately
