@@ -90,7 +90,7 @@ Use the version in [`.nvmrc`](./.nvmrc). Install [Node.js](https://nodejs.org) d
 
 1. Create or reuse a bucket that will store the data that the s3 browser will allow users to browse. This bucket can be in the EN venue account or in a Node's Venue account.
 2. Create CloudFront Origin Server that references the bucket in the previous step noting that:
-    * **Note**: if referencing a bucket that is in _another_ AWS account, be sure to use the fully qualified domain URL in the `origin domain` field.
+    * **Note:**: if referencing a bucket that is in _another_ AWS account, be sure to use the fully qualified domain URL in the `origin domain` field.
     * Origin Access — Select "Origin access control settings (recommended)"
     * Create (or reuse) an "Origin access control" that matches the settings below and reference it:
         * Name: Name this OAC appropriately
@@ -100,6 +100,8 @@ Use the version in [`.nvmrc`](./.nvmrc). Install [Node.js](https://nodejs.org) d
     * Bucket Policy — "No, I will update the bucket policy"
     * Enable Origin Sheild — No
 3. Update the bucket policy for the bucket created in step 1, substituting `<CLOUDFRONT_DISTRIBUTION_ARN>` and `<DATA_BUCKET_NAME>` with your CloudFront Distribution ID and bucket name respectively:
+
+    **Note:** If thie bucket is in a separate account, the CloudFront ARN still needs to reference the EN CloudFront distribution that will be accessing it.
 
     ```
     {
