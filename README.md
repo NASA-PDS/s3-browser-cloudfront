@@ -184,3 +184,13 @@ Use the version in [`.nvmrc`](./.nvmrc). Install [Node.js](https://nodejs.org) d
 7. Run `npm run build` and upload `dist/` to the app bucket.
 
 **Note**: Prefer `npm ci` for installs from a locked tree. Use `npm install` only when you intend to change dependency versions in `package.json`.
+
+### Local Development
+
+1. Clone this repository and `cd` into it.
+2. Run `nvm use`.
+3. Run `npm ci`.
+4. Edit dev server port in webpack.config.js to an available port on your localhost. Under plugins -> devServer -> `port: 9002`.
+5. Run `npm run start`.
+6. Open a browser and go to `localhost:9002` or `localhost:<port>`.
+
