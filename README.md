@@ -15,9 +15,10 @@ Use the version in [`.nvmrc`](./.nvmrc). Install [Node.js](https://nodejs.org) d
 ## Getting started with making changes and deploying this codebase
 
 1. Clone this repository and `cd` into it.
-2. Install or select Node.js per [Prerequisites](#prerequisites) (for example `nvm use`).
-3. Run `npm ci`.
-4. Following PDS/SA practices, create buckets: one for the built app (upload `dist` here after the build) and one or more for data behind CloudFront origins.
+2. Install or select Node.js per [Prerequisites](#prerequisites).
+3. Run `nvm use` to switch to the latest compatible version of node.
+4. Run `npm ci`. If package.json is missing run `npm install` instead. The ci command needs a package.json to work.
+5. Following PDS/SA practices, create buckets: one for the built app (upload `dist` here after the build) and one or more for data behind CloudFront origins.
 
 ### App Bucket
 
@@ -177,10 +178,10 @@ Use the version in [`.nvmrc`](./.nvmrc). Install [Node.js](https://nodejs.org) d
         ```
 
 5. In `webpack.config.js`, find `new webpack.EnvironmentPlugin` and set `PUBLIC_PATH` to the path where the app will be hosted (default `/data/`).
-6. Edit `./src/js/missions.js`:
-  * **`missions`**: Each object key is the mission label in the UI (bucket list and links). Each value needs **`URL`** (origin base for listing requests—typically your CloudFront hostname, e.g. `https://d1234567890abc.cloudfront.net`, or an S3 REST endpoint) and **`Path`** (data behavior URL prefix / logical S3 prefix, usually with a trailing `/`, consistent with CloudFront and routing).
-  * **`appendPathToUrl`** (optional on each mission): Defaults to `true`. When `true`, the app requests listings at `URL` with `Path` appended as URL path segments (typical CloudFront behavior URL). When `false`, the app uses `URL` as-is and sends `Path` (and subfolders) via the `prefix` query parameter instead—useful for virtual-hosted–style S3 URLs where the bucket hostname is already in `URL`.
-  * **`exclude_prefixes`**: Prefix strings to omit from file rows in directory listings (see `missions.js` for the export used by the listing code).
+6. Edit `./src/js/bucketEndpoints.js`:
+  * **`bucketEndpoints`**: Each object key is the bucket label in the UI (bucket list and links). Each value needs **`URL`** (origin base for listing requests—typically your CloudFront hostname, e.g. `https://d1234567890abc.cloudfront.net`, or an S3 REST endpoint) and **`Path`** (data behavior URL prefix / logical S3 prefix, usually with a trailing `/`, consistent with CloudFront and routing).
+  * **`appendPathToUrl`** (optional on each bucketEndpoint): Defaults to `true`. When `true`, the app requests listings at `URL` with `Path` appended as URL path segments (typical CloudFront behavior URL). When `false`, the app uses `URL` as-is and sends `Path` (and subfolders) via the `prefix` query parameter instead—useful for virtual-hosted–style S3 URLs where the bucket hostname is already in `URL`.
+  * **`exclude_prefixes`**: Prefix strings to omit from file rows in directory listings (see `bucketEndpoints.js` for the export used by the listing code).
 7. Run `npm run build` and upload `dist/` to the app bucket.
 
 **Note**: Prefer `npm ci` for installs from a locked tree. Use `npm install` only when you intend to change dependency versions in `package.json`.
@@ -189,7 +190,7 @@ Use the version in [`.nvmrc`](./.nvmrc). Install [Node.js](https://nodejs.org) d
 
 1. Clone this repository and `cd` into it.
 2. Run `nvm use`.
-3. Run `npm ci`.
+3. Run `npm ci` or `npm install` if the package.json file is missing.
 4. Edit dev server port in webpack.config.js to an available port on your localhost. Under plugins -> devServer -> `port: 9002`.
 5. Run `npm run start`.
 6. Open a browser and go to `localhost:9002` or `localhost:<port>`.
