@@ -5,8 +5,13 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CopyWebPackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
-module.exports = (env) => {
-    buildPath =  path.resolve(__dirname, env.production ? 'dist' : 'src');
+module.exports = (env = {}) => {
+    // In development, never use `src` as devServer.static + output.path: the raw
+    // `src/index.html` would be served instead of HtmlWebpackPlugin output (no JS/CSS injected).
+    const isProd = Boolean(env.production);
+    const outputDir = isProd
+        ? path.resolve(__dirname, 'dist')
+        : path.resolve(__dirname, '.webpack-dev');
 
     return {
         entry: './src/js/main.js',
@@ -30,15 +35,25 @@ module.exports = (env) => {
         ],
         output: {
             filename: 'index-style/js/main.js',
-            path: buildPath,
+            path: outputDir,
             publicPath: '/data/'
         },
         devtool: "source-map",
         devServer: {
-            static: buildPath,
+            static: isProd
+                ? false
+                : [
+                      {
+                          directory: path.join(__dirname, 'src/images'),
+                          publicPath: '/images',
+                      },
+                  ],
             port: 8080,
             hot: true,
-            historyApiFallback: true,
+            // Must match output.publicPath so `/` serves HtmlWebpackPlugin output (default `/index.html` 404s).
+            historyApiFallback: {
+                index: '/data/index.html',
+            },
         },
         module: {
             rules: [
