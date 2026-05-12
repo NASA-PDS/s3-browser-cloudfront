@@ -10,7 +10,7 @@ function create_icon(classes, title) {
         .attr("title", title)
         .attr("aria-hidden", "true")
         .add($("<span/>")
-            .addClass("sr-only")
+            .addClass("visually-hidden")
             .text("(" + title + ")"));
 }
 

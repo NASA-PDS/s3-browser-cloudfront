@@ -3,12 +3,12 @@ import { render } from "./autoindex";
 
 import DOMPurify from 'isomorphic-dompurify';
 
-import {missions, exclude_prefixes} from './missions.js';
+import {bucketEndpoints, exclude_prefixes} from './bucketEndpoints.js';
 
 var S3BL_IGNORE_PATH = false;
 
 var SUBDIRS = [];
-$.each( missions, function( key, value ) {
+$.each( bucketEndpoints, function( key, value ) {
     SUBDIRS.push(value.Path);
 });
 
@@ -58,7 +58,7 @@ export function getMissionMatchForPath(currentPathRaw) {
     var norm = normalizeBrowsePath(currentPathRaw);
     var best = null;
     var bestLen = -1;
-    $.each(missions, function(key, value) {
+    $.each(bucketEndpoints, function(key, value) {
         var mp = normalizeBrowsePath(value.Path);
         if (!mp) return;
         if (norm === mp || norm.indexOf(mp) === 0) {
@@ -109,7 +109,7 @@ function resolveBucketUrl() {
     var cp = getCurrentPath();
     var match = getMissionMatchForPath(cp);
     if (!match) {
-        $.each(missions, function(key, value) {
+        $.each(bucketEndpoints, function(key, value) {
             var needle = value.Path.replace(/\/$/, '');
             if (needle && location.pathname.indexOf(needle) >= 0) {
                 var candLen = normalizeBrowsePath(value.Path).length;
