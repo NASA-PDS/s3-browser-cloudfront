@@ -61,10 +61,22 @@ export function render(subdir) {
         missionHomeHash = '#/' + normalizeBrowsePath(getMissionBrowsePath(mission.value)).replace(/^\/+/, '');
     }
 
+    // Home always returns to the bucket/mission picker (hash cleared to #/).
+    var appHomeUrl = getAppBaseUrl() + '#/';
+
     var path_urls = [{
         html: create_icon("fa-fw fas fa-home", document.title),
-        url: mission ? getAppBaseUrl() + missionHomeHash : getAppBaseUrl() + (path_segments.length ? '#/' : ''),
+        url: appHomeUrl,
     }];
+
+    // Show configured mission label as its own crumb so at mission root the active item is not Home
+    // (otherwise the only crumb was Home and Bootstrap "active" styling removed the link).
+    if (mission) {
+        path_urls.push({
+            text: mission.key,
+            url: getAppBaseUrl() + missionHomeHash,
+        });
+    }
 
     var pathSoFar = mission ? normalizeBrowsePath(getMissionBrowsePath(mission.value)).replace(/^\/+/, '') : '';
     path_segments.forEach(function(segment) {
@@ -77,7 +89,14 @@ export function render(subdir) {
 
     // Create the breadcrumb elements for each previous objects
     path_urls.forEach(function(url) {
-        var a = $("<a/>").attr("href", url.url).html(url.html);
+        var a = $("<a/>").attr("href", url.url);
+        if (url.text != null) {
+            a.text(url.text);
+        } else if (typeof url.html === 'string') {
+            a.html(url.html);
+        } else {
+            a.append(url.html);
+        }
         var li = $("<li/>").addClass("breadcrumb-item").append(a);
         $(".breadcrumb").append(li);
     });
