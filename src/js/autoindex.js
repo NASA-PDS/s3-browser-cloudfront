@@ -1,7 +1,8 @@
 import moment from 'moment';
 
 import {sanitizeUrl} from '@braintree/sanitize-url';
-import { getAppBaseUrl, getCurrentPath, getMissionMatchForPath, normalizeBrowsePath } from './list';
+import { getBucketEndpointBrowsePath } from './bucketEndpoints.js';
+import { getAppBaseUrl, getCurrentPath, getBucketEndpointMatchForPath, normalizeBrowsePath } from './list';
 
 // Create a screen reader friendly icon
 function create_icon(classes, title) {
@@ -44,28 +45,40 @@ export function render(subdir) {
     //// Configure the <nav .breadcrumb>
     ////
 
-    // Breadcrumbs: mission Path from missions.js is the logical "/"; only segments below it are shown.
+    // Breadcrumbs: mission browse root from bucketEndpoints; only segments below it are shown.
     const currentPath = getCurrentPath();
-    const mission = getMissionMatchForPath(currentPath);
+    const mission = getBucketEndpointMatchForPath(currentPath);
     var crumbTail = currentPath;
     if (mission) {
         var normCur = normalizeBrowsePath(currentPath);
-        var normMp = normalizeBrowsePath(mission.value.Path);
+        var normMp = normalizeBrowsePath(getBucketEndpointBrowsePath(mission.value));
         crumbTail = normCur === normMp ? '' : normCur.slice(normMp.length);
     }
     const path_segments = crumbTail ? crumbTail.replace(/\/$/, '').split("/").filter(Boolean) : [];
 
     var missionHomeHash = '';
     if (mission) {
-        missionHomeHash = '#/' + normalizeBrowsePath(mission.value.Path).replace(/^\/+/, '');
+        missionHomeHash = '#/' + normalizeBrowsePath(getBucketEndpointBrowsePath(mission.value)).replace(/^\/+/, '');
     }
+
+    // Home always returns to the bucket/mission picker (hash cleared to #/).
+    var appHomeUrl = getAppBaseUrl() + '#/';
 
     var path_urls = [{
         html: create_icon("fa-fw fas fa-home", document.title),
-        url: mission ? getAppBaseUrl() + missionHomeHash : getAppBaseUrl() + (path_segments.length ? '#/' : ''),
+        url: appHomeUrl,
     }];
 
-    var pathSoFar = mission ? normalizeBrowsePath(mission.value.Path).replace(/^\/+/, '') : '';
+    // Show configured mission label as its own crumb so at mission root the active item is not Home
+    // (otherwise the only crumb was Home and Bootstrap "active" styling removed the link).
+    if (mission) {
+        path_urls.push({
+            text: mission.key,
+            url: getAppBaseUrl() + missionHomeHash,
+        });
+    }
+
+    var pathSoFar = mission ? normalizeBrowsePath(getBucketEndpointBrowsePath(mission.value)).replace(/^\/+/, '') : '';
     path_segments.forEach(function(segment) {
         pathSoFar += segment + "/";
         path_urls.push({
@@ -76,7 +89,14 @@ export function render(subdir) {
 
     // Create the breadcrumb elements for each previous objects
     path_urls.forEach(function(url) {
-        var a = $("<a/>").attr("href", url.url).html(url.html);
+        var a = $("<a/>").attr("href", url.url);
+        if (url.text != null) {
+            a.text(url.text);
+        } else if (typeof url.html === 'string') {
+            a.html(url.html);
+        } else {
+            a.append(url.html);
+        }
         var li = $("<li/>").addClass("breadcrumb-item").append(a);
         $(".breadcrumb").append(li);
     });
