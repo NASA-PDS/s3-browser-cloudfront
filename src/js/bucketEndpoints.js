@@ -1,18 +1,18 @@
 /**
- * Site-specific mission configuration for this deployment.
+ * Site-specific bucket endpoint configuration for this deployment.
  *
  * Keep this file aligned with [README.md](../../README.md) (step 7 — editing `./src/js/bucketEndpoints.js`).
  */
 
 /**
- * One mission's connection between UI label, browse route prefix, and listing origin.
+ * One bucket endpoint's connection between UI label, browse route prefix, and listing origin.
  *
- * @typedef {Object} MissionEntry
+ * @typedef {Object} BucketEndpointEntry
  * @property {string} URL - Base URL used for S3 ListBucket-style listing requests (CloudFront distribution
  *   origin or S3 REST endpoint). The app strips duplicate slashes; include scheme and host.
  * @property {string} listingUrlPathPrefix - URL path prefix for this dataset (CloudFront behavior path or
  *   path-style segment). Prefer a trailing `/`. Hash routes and prefix matching use the full browse path:
- *   `listingUrlPathPrefix` + optional `deepLinkPath` (see {@link getMissionBrowsePath}).
+ *   `listingUrlPathPrefix` + optional `deepLinkPath` (see {@link getBucketEndpointBrowsePath}).
  * @property {string} [deepLinkPath] - Optional path under the base (no leading slash required); omit the
  *   `listingUrlPathPrefix` portion here so it is not repeated. Sent as S3 `prefix` at browse root when
  *   using path-style listing (`appendPathToUrl` not `false`).
@@ -22,12 +22,12 @@
  */
 
 /**
- * Mission catalog: each **key** is the label shown in the UI; each **value** is a {@link MissionEntry}.
+ * Bucket endpoint catalog: each **key** is the label shown in the UI; each **value** is a {@link BucketEndpointEntry}.
  *
- * @type {Object.<string, MissionEntry>}
+ * @type {Object.<string, BucketEndpointEntry>}
  */
 
-function normalizeMissionPathComponent(p) {
+function normalizeBucketEndpointPathComponent(p) {
     if (!p) return '';
     var s = String(p).replace(/^\/+/, '');
     if (!s.endsWith('/')) {
@@ -39,13 +39,13 @@ function normalizeMissionPathComponent(p) {
 /**
  * Full hash/browse path for an entry: listingUrlPathPrefix + optional deepLinkPath (base not repeated).
  *
- * @param {MissionEntry} mission
+ * @param {BucketEndpointEntry} bucketEndpoint
  * @returns {string}
  */
-export function getMissionBrowsePath(mission) {
-    if (!mission) return '';
-    var base = normalizeMissionPathComponent(mission.listingUrlPathPrefix || '');
-    var deepRaw = mission.deepLinkPath;
+export function getBucketEndpointBrowsePath(bucketEndpoint) {
+    if (!bucketEndpoint) return '';
+    var base = normalizeBucketEndpointPathComponent(bucketEndpoint.listingUrlPathPrefix || '');
+    var deepRaw = bucketEndpoint.deepLinkPath;
     if (deepRaw == null || deepRaw === '') {
         return base;
     }

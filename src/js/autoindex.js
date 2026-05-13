@@ -1,8 +1,8 @@
 import moment from 'moment';
 
 import {sanitizeUrl} from '@braintree/sanitize-url';
-import { getMissionBrowsePath } from './bucketEndpoints.js';
-import { getAppBaseUrl, getCurrentPath, getMissionMatchForPath, normalizeBrowsePath } from './list';
+import { getBucketEndpointBrowsePath } from './bucketEndpoints.js';
+import { getAppBaseUrl, getCurrentPath, getBucketEndpointMatchForPath, normalizeBrowsePath } from './list';
 
 // Create a screen reader friendly icon
 function create_icon(classes, title) {
@@ -47,18 +47,18 @@ export function render(subdir) {
 
     // Breadcrumbs: mission browse root from bucketEndpoints; only segments below it are shown.
     const currentPath = getCurrentPath();
-    const mission = getMissionMatchForPath(currentPath);
+    const mission = getBucketEndpointMatchForPath(currentPath);
     var crumbTail = currentPath;
     if (mission) {
         var normCur = normalizeBrowsePath(currentPath);
-        var normMp = normalizeBrowsePath(getMissionBrowsePath(mission.value));
+        var normMp = normalizeBrowsePath(getBucketEndpointBrowsePath(mission.value));
         crumbTail = normCur === normMp ? '' : normCur.slice(normMp.length);
     }
     const path_segments = crumbTail ? crumbTail.replace(/\/$/, '').split("/").filter(Boolean) : [];
 
     var missionHomeHash = '';
     if (mission) {
-        missionHomeHash = '#/' + normalizeBrowsePath(getMissionBrowsePath(mission.value)).replace(/^\/+/, '');
+        missionHomeHash = '#/' + normalizeBrowsePath(getBucketEndpointBrowsePath(mission.value)).replace(/^\/+/, '');
     }
 
     // Home always returns to the bucket/mission picker (hash cleared to #/).
@@ -78,7 +78,7 @@ export function render(subdir) {
         });
     }
 
-    var pathSoFar = mission ? normalizeBrowsePath(getMissionBrowsePath(mission.value)).replace(/^\/+/, '') : '';
+    var pathSoFar = mission ? normalizeBrowsePath(getBucketEndpointBrowsePath(mission.value)).replace(/^\/+/, '') : '';
     path_segments.forEach(function(segment) {
         pathSoFar += segment + "/";
         path_urls.push({

@@ -3,7 +3,7 @@ import { render } from "./autoindex";
 
 import DOMPurify from 'isomorphic-dompurify';
 
-import {bucketEndpoints, exclude_prefixes, getMissionBrowsePath} from './bucketEndpoints.js';
+import {bucketEndpoints, exclude_prefixes, getBucketEndpointBrowsePath} from './bucketEndpoints.js';
 
 var S3BL_IGNORE_PATH = false;
 
@@ -48,7 +48,7 @@ export function normalizeBrowsePath(p) {
 
 var SUBDIRS = [];
 $.each( bucketEndpoints, function( key, value ) {
-    SUBDIRS.push(getMissionBrowsePath(value));
+    SUBDIRS.push(getBucketEndpointBrowsePath(value));
 });
 
 /** URL path segment for path-style listing requests (CloudFront behavior path). */
@@ -66,12 +66,12 @@ function getS3RootPrefixForMission(mission) {
 /**
  * Longest browse-path-prefix mission matching currentPath (hash or pathname browse segment).
  */
-export function getMissionMatchForPath(currentPathRaw) {
+export function getBucketEndpointMatchForPath(currentPathRaw) {
     var norm = normalizeBrowsePath(currentPathRaw);
     var best = null;
     var bestLen = -1;
     $.each(bucketEndpoints, function(key, value) {
-        var mp = normalizeBrowsePath(getMissionBrowsePath(value));
+        var mp = normalizeBrowsePath(getBucketEndpointBrowsePath(value));
         if (!mp) return;
         if (norm === mp || norm.indexOf(mp) === 0) {
             if (mp.length > bestLen) {
@@ -88,9 +88,9 @@ export function getMissionMatchForPath(currentPathRaw) {
  */
 function getBrowseParentPath(currentPathRaw) {
     var cur = normalizeBrowsePath(currentPathRaw);
-    var match = getMissionMatchForPath(currentPathRaw);
+    var match = getBucketEndpointMatchForPath(currentPathRaw);
     if (match) {
-        var mp = normalizeBrowsePath(getMissionBrowsePath(match.value));
+        var mp = normalizeBrowsePath(getBucketEndpointBrowsePath(match.value));
         if (cur === mp) {
             return null;
         }
@@ -119,13 +119,13 @@ function resolveBucketUrl() {
     CURRENT_MISSION = null;
     BUCKET_URL = '';
     var cp = getCurrentPath();
-    var match = getMissionMatchForPath(cp);
+    var match = getBucketEndpointMatchForPath(cp);
     if (!match) {
         $.each(bucketEndpoints, function(key, value) {
-            var needle = getMissionBrowsePath(value).replace(/\/$/, '');
+            var needle = getBucketEndpointBrowsePath(value).replace(/\/$/, '');
             if (needle && location.pathname.indexOf(needle) >= 0) {
-                var candLen = normalizeBrowsePath(getMissionBrowsePath(value)).length;
-                if (!match || candLen > normalizeBrowsePath(getMissionBrowsePath(match.value)).length) {
+                var candLen = normalizeBrowsePath(getBucketEndpointBrowsePath(value)).length;
+                if (!match || candLen > normalizeBrowsePath(getBucketEndpointBrowsePath(match.value)).length) {
                     match = { key: key, value: value };
                 }
             }
@@ -139,7 +139,7 @@ function resolveBucketUrl() {
     if (appendPath) {
         var pathForUrl = normalizeListingUrlPathPrefix(match.value);
         if (!pathForUrl) {
-            pathForUrl = normalizeBrowsePath(getMissionBrowsePath(match.value));
+            pathForUrl = normalizeBrowsePath(getBucketEndpointBrowsePath(match.value));
         }
         BUCKET_URL = match.value.URL.replace(/\/$/, '') + '/' + pathForUrl.replace(/\/$/, '');
     } else {
@@ -223,7 +223,7 @@ function createS3QueryUrl(marker) {
 
     var relativePrefix = currentPath;
     if (CURRENT_MISSION) {
-        var mb = normalizeBrowsePath(getMissionBrowsePath(CURRENT_MISSION));
+        var mb = normalizeBrowsePath(getBucketEndpointBrowsePath(CURRENT_MISSION));
         var cpn = normalizeBrowsePath(currentPath);
         if (mb && cpn.indexOf(mb) === 0) {
             relativePrefix = cpn.slice(mb.length);
@@ -232,7 +232,7 @@ function createS3QueryUrl(marker) {
 
     var prefixParam = '';
     if (CURRENT_MISSION && CURRENT_MISSION.appendPathToUrl === false) {
-        var missionPrefix = getMissionBrowsePath(CURRENT_MISSION).replace(/\/$/, '');
+        var missionPrefix = getBucketEndpointBrowsePath(CURRENT_MISSION).replace(/\/$/, '');
         if (relativePrefix) {
             var rel = relativePrefix.replace(/\/$/, '');
             prefixParam = missionPrefix + '/' + rel + '/';
