@@ -137,6 +137,8 @@ function resolveBucketUrl() {
     CURRENT_MISSION = match.value;
     var appendPath = match.value.appendPathToUrl !== false;
     if (appendPath) {
+        // CloudFront / path-style: URL path must be the behavior prefix only. Omitting listingUrlPathPrefix
+        // with appendPathToUrl true falls back to full browse path (legacy); direct buckets use append false.
         var pathForUrl = normalizeListingUrlPathPrefix(match.value);
         if (!pathForUrl) {
             pathForUrl = normalizeBrowsePath(getMissionBrowsePath(match.value));
@@ -214,8 +216,9 @@ function getS3Data(marker, table) {
 }
 
 function createS3QueryUrl(marker) {
-    // Path-style: BUCKET_URL is URL + listingUrlPathPrefix; ?prefix= carries deepLinkPath + subfolders.
-    // appendPathToUrl false: BUCKET_URL is origin only; full browse path in &prefix=.
+    // Path-style (CF): BUCKET_URL is URL + listingUrlPathPrefix; ?prefix= carries deepLinkPath + subfolders.
+    // Direct bucket (appendPathToUrl false): BUCKET_URL is origin only; getMissionBrowsePath (often deepLinkPath
+    // only) + subfolders in &prefix=.
     var s3_rest_url = BUCKET_URL.replace(/\/$/, '') + '/?delimiter=/';
 
     var currentPath = getCurrentPath();

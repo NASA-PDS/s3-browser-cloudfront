@@ -10,12 +10,13 @@
  * @typedef {Object} MissionEntry
  * @property {string} URL - Base URL used for S3 ListBucket-style listing requests (CloudFront distribution
  *   origin or S3 REST endpoint). The app strips duplicate slashes; include scheme and host.
- * @property {string} listingUrlPathPrefix - URL path prefix for this dataset (CloudFront behavior path or
- *   path-style segment). Prefer a trailing `/`. Hash routes and prefix matching use the full browse path:
- *   `listingUrlPathPrefix` + optional `deepLinkPath` (see {@link getMissionBrowsePath}).
- * @property {string} [deepLinkPath] - Optional path under the base (no leading slash required); omit the
- *   `listingUrlPathPrefix` portion here so it is not repeated. Sent as S3 `prefix` at browse root when
- *   using path-style listing (`appendPathToUrl` not `false`).
+ * @property {string} [listingUrlPathPrefix] - For CloudFront path-style listings (`appendPathToUrl` not
+ *   `false`): URL path matched by the distribution behavior (prefer trailing `/`). Omit or leave empty for
+ *   direct virtual-hosted bucket access (`appendPathToUrl: false`); hash routes and `prefix` then use
+ *   `deepLinkPath` only (see {@link getMissionBrowsePath}).
+ * @property {string} [deepLinkPath] - Path segment(s) without repeating `listingUrlPathPrefix`. With path-style
+ *   listing, sent as S3 `?prefix=` at browse root (under the behavior path). With `appendPathToUrl: false` and
+ *   no `listingUrlPathPrefix`, this is the sole browse hash root and ListBucket prefix (direct bucket).
  * @property {boolean} [appendPathToUrl=true] - If omitted or `true`, listing requests use `URL` + `/` +
  *   `listingUrlPathPrefix` in the path (typical CloudFront behavior URL). If `false`, listing URLs use
  *   `URL` only and the full browse path is supplied via the `prefix` query parameter (virtual-hosted S3).
@@ -37,7 +38,8 @@ function normalizeMissionPathComponent(p) {
 }
 
 /**
- * Full hash/browse path for an entry: listingUrlPathPrefix + optional deepLinkPath (base not repeated).
+ * Full hash/browse path: optional listingUrlPathPrefix + optional deepLinkPath (base not repeated).
+ * If `listingUrlPathPrefix` is omitted, browse root is `deepLinkPath` alone (direct bucket).
  *
  * @param {MissionEntry} mission
  * @returns {string}
@@ -61,8 +63,8 @@ export function getMissionBrowsePath(mission) {
 
 export const bucketEndpoints = {
     "Catalina Sky Survey": {
-        "listingUrlPathPrefix": "sbn/gbo.ast.catalina.survey/",
         "URL": "https://pds-css-archive.s3.us-west-2.amazonaws.com",
+        "deepLinkPath": "sbn/gbo.ast.catalina.survey/",
         "appendPathToUrl": false
     }
 };
