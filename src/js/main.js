@@ -16,12 +16,12 @@ import * as bootstrap from 'bootstrap';
 import './utils';
 import './error';
 
-import { bucketEndpoints } from './bucketEndpoints.js';
+import { bucketEndpoints, getMissionBrowsePath } from './bucketEndpoints.js';
 import getS3Data, { getAppBaseUrl, getCurrentPath, getMissionMatchForPath } from './list';
 
 var SUBDIRS = [];
 $.each( bucketEndpoints, function( key, value ) {
-    SUBDIRS.push(value.Path);
+    SUBDIRS.push(getMissionBrowsePath(value));
 });
 
 // Redirect to index.html so the app is always served (S3/CloudFront without static hosting).
@@ -72,7 +72,7 @@ function renderBucketList() {
         '</table></nav></div>'
     );
     $.each( bucketEndpoints, function( key, value ) {
-        var href = getAppBaseUrl() + '#/' + value.Path;
+        var href = getAppBaseUrl() + '#/' + getMissionBrowsePath(value);
         $( ".bucketlist").append(
             "<tr class='even'><th scope='row'><div class='position-relative'>" +
             "<i class='fa-fw fas fa-folder' title='Directory' aria-hidden='true'></i>" +

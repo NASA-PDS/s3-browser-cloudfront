@@ -1,6 +1,7 @@
 import moment from 'moment';
 
 import {sanitizeUrl} from '@braintree/sanitize-url';
+import { getMissionBrowsePath } from './bucketEndpoints.js';
 import { getAppBaseUrl, getCurrentPath, getMissionMatchForPath, normalizeBrowsePath } from './list';
 
 // Create a screen reader friendly icon
@@ -44,20 +45,20 @@ export function render(subdir) {
     //// Configure the <nav .breadcrumb>
     ////
 
-    // Breadcrumbs: mission Path from missions.js is the logical "/"; only segments below it are shown.
+    // Breadcrumbs: mission browse root from bucketEndpoints; only segments below it are shown.
     const currentPath = getCurrentPath();
     const mission = getMissionMatchForPath(currentPath);
     var crumbTail = currentPath;
     if (mission) {
         var normCur = normalizeBrowsePath(currentPath);
-        var normMp = normalizeBrowsePath(mission.value.Path);
+        var normMp = normalizeBrowsePath(getMissionBrowsePath(mission.value));
         crumbTail = normCur === normMp ? '' : normCur.slice(normMp.length);
     }
     const path_segments = crumbTail ? crumbTail.replace(/\/$/, '').split("/").filter(Boolean) : [];
 
     var missionHomeHash = '';
     if (mission) {
-        missionHomeHash = '#/' + normalizeBrowsePath(mission.value.Path).replace(/^\/+/, '');
+        missionHomeHash = '#/' + normalizeBrowsePath(getMissionBrowsePath(mission.value)).replace(/^\/+/, '');
     }
 
     var path_urls = [{
@@ -65,7 +66,7 @@ export function render(subdir) {
         url: mission ? getAppBaseUrl() + missionHomeHash : getAppBaseUrl() + (path_segments.length ? '#/' : ''),
     }];
 
-    var pathSoFar = mission ? normalizeBrowsePath(mission.value.Path).replace(/^\/+/, '') : '';
+    var pathSoFar = mission ? normalizeBrowsePath(getMissionBrowsePath(mission.value)).replace(/^\/+/, '') : '';
     path_segments.forEach(function(segment) {
         pathSoFar += segment + "/";
         path_urls.push({

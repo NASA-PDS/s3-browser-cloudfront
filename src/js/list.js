@@ -3,14 +3,9 @@ import { render } from "./autoindex";
 
 import DOMPurify from 'isomorphic-dompurify';
 
-import {bucketEndpoints, exclude_prefixes} from './bucketEndpoints.js';
+import {bucketEndpoints, exclude_prefixes, getMissionBrowsePath} from './bucketEndpoints.js';
 
 var S3BL_IGNORE_PATH = false;
-
-var SUBDIRS = [];
-$.each( bucketEndpoints, function( key, value ) {
-    SUBDIRS.push(value.Path);
-});
 
 /**
  * Base URL that always serves the app (S3/CloudFront without static hosting requires index.html in path).
@@ -51,15 +46,32 @@ export function normalizeBrowsePath(p) {
     return s;
 }
 
+var SUBDIRS = [];
+$.each( bucketEndpoints, function( key, value ) {
+    SUBDIRS.push(getMissionBrowsePath(value));
+});
+
+/** URL path segment for path-style listing requests (CloudFront behavior path). */
+function normalizeListingUrlPathPrefix(mission) {
+    if (!mission || !mission.listingUrlPathPrefix) return '';
+    return normalizeBrowsePath(mission.listingUrlPathPrefix);
+}
+
+/** S3 ?prefix= at mission browse root for path-style listings (keys under listingUrlPathPrefix). */
+function getS3RootPrefixForMission(mission) {
+    if (!mission || mission.appendPathToUrl === false) return '';
+    return normalizeBrowsePath(mission.deepLinkPath || '');
+}
+
 /**
- * Longest Path-prefix mission matching currentPath (hash or pathname browse segment).
+ * Longest browse-path-prefix mission matching currentPath (hash or pathname browse segment).
  */
 export function getMissionMatchForPath(currentPathRaw) {
     var norm = normalizeBrowsePath(currentPathRaw);
     var best = null;
     var bestLen = -1;
     $.each(bucketEndpoints, function(key, value) {
-        var mp = normalizeBrowsePath(value.Path);
+        var mp = normalizeBrowsePath(getMissionBrowsePath(value));
         if (!mp) return;
         if (norm === mp || norm.indexOf(mp) === 0) {
             if (mp.length > bestLen) {
@@ -78,7 +90,7 @@ function getBrowseParentPath(currentPathRaw) {
     var cur = normalizeBrowsePath(currentPathRaw);
     var match = getMissionMatchForPath(currentPathRaw);
     if (match) {
-        var mp = normalizeBrowsePath(match.value.Path);
+        var mp = normalizeBrowsePath(getMissionBrowsePath(match.value));
         if (cur === mp) {
             return null;
         }
@@ -110,10 +122,10 @@ function resolveBucketUrl() {
     var match = getMissionMatchForPath(cp);
     if (!match) {
         $.each(bucketEndpoints, function(key, value) {
-            var needle = value.Path.replace(/\/$/, '');
+            var needle = getMissionBrowsePath(value).replace(/\/$/, '');
             if (needle && location.pathname.indexOf(needle) >= 0) {
-                var candLen = normalizeBrowsePath(value.Path).length;
-                if (!match || candLen > normalizeBrowsePath(match.value.Path).length) {
+                var candLen = normalizeBrowsePath(getMissionBrowsePath(value)).length;
+                if (!match || candLen > normalizeBrowsePath(getMissionBrowsePath(match.value)).length) {
                     match = { key: key, value: value };
                 }
             }
@@ -125,7 +137,11 @@ function resolveBucketUrl() {
     CURRENT_MISSION = match.value;
     var appendPath = match.value.appendPathToUrl !== false;
     if (appendPath) {
-        BUCKET_URL = match.value.URL.replace(/\/$/, '') + '/' + match.value.Path.replace(/\/$/, '');
+        var pathForUrl = normalizeListingUrlPathPrefix(match.value);
+        if (!pathForUrl) {
+            pathForUrl = normalizeBrowsePath(getMissionBrowsePath(match.value));
+        }
+        BUCKET_URL = match.value.URL.replace(/\/$/, '') + '/' + pathForUrl.replace(/\/$/, '');
     } else {
         BUCKET_URL = match.value.URL.replace(/\/$/, '');
     }
@@ -198,8 +214,8 @@ function getS3Data(marker, table) {
 }
 
 function createS3QueryUrl(marker) {
-    // CloudFront: BUCKET_URL contains the mission path; optional &prefix= is only for deeper folders.
-    // Direct S3 bucket: BUCKET_URL is the bucket origin; mission Path + subfolders go in &prefix=.
+    // Path-style: BUCKET_URL is URL + listingUrlPathPrefix; ?prefix= carries deepLinkPath + subfolders.
+    // appendPathToUrl false: BUCKET_URL is origin only; full browse path in &prefix=.
     var s3_rest_url = BUCKET_URL.replace(/\/$/, '') + '/?delimiter=/';
 
     var currentPath = getCurrentPath();
@@ -207,23 +223,32 @@ function createS3QueryUrl(marker) {
 
     var relativePrefix = currentPath;
     if (CURRENT_MISSION) {
-        var mp = CURRENT_MISSION.Path;
-        if (currentPath.indexOf(mp) === 0) {
-            relativePrefix = currentPath.slice(mp.length);
+        var mb = normalizeBrowsePath(getMissionBrowsePath(CURRENT_MISSION));
+        var cpn = normalizeBrowsePath(currentPath);
+        if (mb && cpn.indexOf(mb) === 0) {
+            relativePrefix = cpn.slice(mb.length);
         }
     }
 
     var prefixParam = '';
     if (CURRENT_MISSION && CURRENT_MISSION.appendPathToUrl === false) {
-        var missionPrefix = CURRENT_MISSION.Path.replace(/\/$/, '');
+        var missionPrefix = getMissionBrowsePath(CURRENT_MISSION).replace(/\/$/, '');
         if (relativePrefix) {
             var rel = relativePrefix.replace(/\/$/, '');
             prefixParam = missionPrefix + '/' + rel + '/';
         } else {
             prefixParam = missionPrefix + '/';
         }
-    } else if (relativePrefix) {
-        prefixParam = relativePrefix.replace(/\/$/, '') + '/';
+    } else {
+        var s3Root = getS3RootPrefixForMission(CURRENT_MISSION);
+        var relOnly = relativePrefix.replace(/\/$/, '');
+        if (s3Root && relOnly) {
+            prefixParam = s3Root.replace(/\/$/, '') + '/' + relOnly + '/';
+        } else if (s3Root) {
+            prefixParam = s3Root.endsWith('/') ? s3Root : s3Root + '/';
+        } else if (relativePrefix) {
+            prefixParam = relativePrefix.replace(/\/$/, '') + '/';
+        }
     }
 
     if (prefixParam) {
