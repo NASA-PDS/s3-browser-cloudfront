@@ -16,12 +16,12 @@ import * as bootstrap from 'bootstrap';
 import './utils';
 import './error';
 
-import { bucketEndpoints, getMissionBrowsePath } from './bucketEndpoints.js';
-import getS3Data, { getAppBaseUrl, getCurrentPath, getMissionMatchForPath } from './list';
+import { bucketEndpoints, getBucketEndpointBrowsePath } from './bucketEndpoints.js';
+import getS3Data, { getAppBaseUrl, getCurrentPath, getBucketEndpointMatchForPath } from './list';
 
 var SUBDIRS = [];
 $.each( bucketEndpoints, function( key, value ) {
-    SUBDIRS.push(getMissionBrowsePath(value));
+    SUBDIRS.push(getBucketEndpointBrowsePath(value));
 });
 
 // Redirect to index.html so the app is always served (S3/CloudFront without static hosting).
@@ -72,7 +72,7 @@ function renderBucketList() {
         '</table></nav></div>'
     );
     $.each( bucketEndpoints, function( key, value ) {
-        var href = getAppBaseUrl() + '#/' + getMissionBrowsePath(value);
+        var href = getAppBaseUrl() + '#/' + getBucketEndpointBrowsePath(value);
         $( ".bucketlist").append(
             "<tr class='even'><th scope='row'><div class='position-relative'>" +
             "<i class='fa-fw fas fa-folder' title='Directory' aria-hidden='true'></i>" +
@@ -88,7 +88,7 @@ function handleRoute() {
     if (isAtAppRoot()) {
         $('.breadcrumb').html('');
         renderBucketList();
-    } else if (getMissionMatchForPath(getCurrentPath())) {
+    } else if (getBucketEndpointMatchForPath(getCurrentPath())) {
         $('.breadcrumb').html('');
         $('#files').html('');
         getS3Data();
