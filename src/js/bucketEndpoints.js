@@ -62,6 +62,11 @@ export const bucketEndpoints = {
         "URL": "https://pds-css-archive.s3.us-west-2.amazonaws.com",
         "deepLinkPath": "sbn/gbo.ast.catalina.survey/",
         "appendPathToUrl": false
+    },
+    "lroc": {
+        "listingUrlPathPrefix": "data/store/img/",
+        "deepLinkPath": "lunar_reconnaissance_orbiter/pds4/lroc/lro-l-lroc-2-edr/",
+        "URL": "https://pds-sit.mcp.nasa.gov"
     }
 };
 
