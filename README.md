@@ -1,199 +1,48 @@
 # PDS S3 Web Browser Using Cloudfront
 
-## Full Original Instructions For MacOS
+## MacOS
 
 For one time setup instructions see [setup for macOS](./docs/setup-mac.md)
 
 For everyday use see [work on macOS](./docs/work-mac.md)
 
-## Prerequisites
+## Getting started
 
 ### Node.js
 
 Use the version in [`.nvmrc`](./.nvmrc). Install [Node.js](https://nodejs.org) directly, or use [nvm](https://github.com/nvm-sh/nvm?tab=readme-ov-file#intro) and run `nvm use` in the repo root.
 
-## Getting started with making changes and deploying this codebase
+## Local Development
 
 1. Clone this repository and `cd` into it.
 2. Install or select Node.js per [Prerequisites](#prerequisites).
 3. Run `nvm use` to switch to the latest compatible version of node.
 4. Run `npm ci`. If package.json is missing run `npm install` instead. The ci command needs a package.json to work.
-5. Following PDS/SA practices, create buckets: one for the built app (upload `dist` here after the build) and one or more for data behind CloudFront origins.
+5. Edit dev server port in webpack.config.js to an available port on your localhost. Under plugins -> devServer -> `port: 9002`.
+6. Run `npm run start`.
+7. Open a browser and go to `localhost:9002` or `localhost:<port>`.
 
-### App Bucket
+## Deployment
 
-1. Create a bucket that will store the built app (upload `dist` here after the build).
-2. Create CloudFront Origin Server that references the bucket in the previous step noting that:
-    * Origin Access — Select "Origin access control settings (recommended)"
-    * Create (or reuse) an "Origin access control" that matches the settings below and reference it:
-        * Name: Name this OAC appropriately
-        * Description: Describe this OAC appropriately
-        * Signing Behavior: "Sign requests (recommended)" (Is labeled as "Always sign requests" when viewing an existing OAC)
-        * Origin Type: "S3"
-    * Bucket Policy — "No, I will update the bucket policy"
-    * Enable Origin Sheild — No
-3. Update the bucket policy for the bucket created in step 1, substituting `<CLOUDFRONT_DISTRIBUTION_ARN>` and `<APP_BUCKET_NAME>` with your CloudFront Distribution ARN and S3 Browser App bucket name respectively:
+This application is designed to work in AWS. It needs an S3 bucket that holds the source code and a cloudfront to serve it. Any data bucket it is meant to read needs its own cloudfront set up. Terraform is used to create the s3-bucket and the cloudfront.
 
-    ```
-    {
-        "Version": "2008-10-17",
-        "Id": "PolicyForCloudFrontPrivateContent",
-        "Statement": [
-            {
-                "Sid": "1",
-                "Effect": "Allow",
-                "Principal": {
-                    "Service": "cloudfront.amazonaws.com"
-                },
-                "Action": "s3:GetObject",
-                "Resource": "arn:aws:s3:::<APP_BUCKET_NAME>/*",
-                "Condition": {
-                    "StringEquals": {
-                        "AWS:SourceArn": "<CLOUDFRONT_DISTRIBUTION_ARN>"
-                    }
-                }
-            }
-        ]
-    }
-    ```
+### Edit configuration for source code build
 
-4. Add a CloudFront behavior that uses the newly created origin server that references the bucket:
-    * Path Pattern: Choose a name that will be used to access the app via CloudFront. For example, if we want the path the user uses to access the app to be "data-browser", the path pattern would be `/data-browser*`
-    * Origin and origin groups: Select the bucket created in step 1
-    * Compress objects automatically: Yes
-    * Viewer protocol policy: "HTTPS Only"
-    * Allowed HTTP methods: "GET, HEAD, OPTIONS"
-    * Restrict viewer access: No
-    * Cache key and origin requests: "Cache policy and origin request policy (recommended)"
-    * Cache policy: CachingDisabled
-    * Origin request policy: "AllViewerExceptHostHeader"
-    * Response Headers Policy: "SimpleCORS"
-    * Create a CloudFront Function and assign it to the "viewer request" function association. The function should rewrite paths so that the user is redirected to the app's `index.html` file that is uploaded to the bucket. Note the `<PATH_PATTERN>` used in the function that needs to be updated to match the path pattern you chose in step 1, the trailing `/` is needed here:
+1. Edit the bucketEndpoints object inside bucketEndpoints.js with the endpoints s3-browser should traverse.
+2. Edit webpack.config.js with the location url at which the app will be deployed. The default is set to /data in other words `https://<site>/data`. Edit `PUBLIC_PATH: '/data/'`, `publicPath: '/data/'`, `index: '/data/index.html'` with your expected path.
+3. Run `npm run build`. This will create the distribution code in the /dist directory. This is what will need to be uploaded to the s3-bucket
 
-        Development Runtime: cloudfront-js-2.0
+### Terraform
 
-        ```
-        function handler(event) {
-            
-            var request = event.request;
+The S3 bucket is managed by terraform. More details here. https://github.com/NASA-PDS/pds-tf-modules/blob/main/terraform/modules/s3/README.md
 
-            request.uri = request.uri.replace(/^\/<PATH_PATTERN>/, '') || '/';
-            
-            if (request.uri.endsWith('/')) {
-                request.uri += 'index.html'
-            }
-            
-            return request;
-        }
-        ```
-
-### Data Bucket
-
-1. Create or reuse a bucket that will store the data that the s3 browser will allow users to browse. This bucket can be in the EN venue account or in a Node's Venue account.
-2. Create CloudFront Origin Server that references the bucket in the previous step noting that:
-    * **Note:**: if referencing a bucket that is in _another_ AWS account, be sure to use the fully qualified domain URL in the `origin domain` field.
-    * Origin Access — Select "Origin access control settings (recommended)"
-    * Create (or reuse) an "Origin access control" that matches the settings below and reference it:
-        * Name: Name this OAC appropriately
-        * Description: Describe this OAC appropriately
-        * Signing Behavior: "Sign requests (recommended)" (Is labeled as "Always sign requests" when viewing an existing OAC)
-        * Origin Type: "S3"
-    * Bucket Policy — "No, I will update the bucket policy"
-    * Enable Origin Sheild — No
-3. Update the bucket policy for the bucket created in step 1, substituting `<CLOUDFRONT_DISTRIBUTION_ARN>` and `<DATA_BUCKET_NAME>` with your CloudFront Distribution ID and bucket name respectively:
-
-    **Note:** If thie bucket is in a separate account, the CloudFront ARN still needs to reference the EN CloudFront distribution that will be accessing it.
-
-    ```
-    {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "AllowCloudFrontGetObject",
-                "Effect": "Allow",
-                "Principal": {
-                    "Service": "cloudfront.amazonaws.com"
-                },
-                "Action": "s3:GetObject",
-                "Resource": "arn:aws:s3:::<DATA_BUCKET_NAME>/*",
-                "Condition": {
-                    "StringEquals": {
-                        "AWS:SourceArn": "<CLOUDFRONT_DISTRIBUTION_ARN>"
-                    }
-                }
-            },
-            {
-                "Sid": "AllowCloudFrontListBucket",
-                "Effect": "Allow",
-                "Principal": {
-                    "Service": "cloudfront.amazonaws.com"
-                },
-                "Action": "s3:ListBucket",
-                "Resource": "arn:aws:s3:::<DATA_BUCKET_NAME>",
-                "Condition": {
-                    "StringEquals": {
-                        "AWS:SourceArn": "<CLOUDFRONT_DISTRIBUTION_ARN>"
-                    }
-                }
-            }
-        ]
-    }
-    ```
-
-4. Add a CloudFront behavior that uses the newly created origin server that references the bucket:
-    * Path Pattern: Choose a name that will be displayed in s3-browser. For example, if we called the data folder "peer-review-data", the path pattern would be `peer-review-data/*`
-    * Origin and origin groups: Select the bucket created in step 1
-    * Compress objects automatically: Yes
-    * Viewer protocol policy: "HTTPS only"
-    * Allowed HTTP methods: "GET, HEAD, OPTIONS"
-    * Restrict viewer access: No
-    * Cache key and origin requests: "Cache policy and origin request policy (recommended)"
-    * Cache policy: CachingDisabled
-    * Origin request policy: "AllViewerExceptHostHeader"
-    * Response Headers Policy: "SimpleCORS"
-    * Create a CloudFront Function and assign it to the "viewer request" function association. The function should rewrite paths to the data in the bucket. Note the `<PATH_PATTERN>` used in the function that needs to be updated to match the path pattern you chose in step 1, the trailing `/` is needed here:
-
-        Development Runtime: cloudfront-js-2.0
-
-        ```
-        function handler(event) {
-            var request = event.request;
-
-            if (request.method === 'OPTIONS') {
-                return {
-                    statusCode: 204,
-                    statusDescription: 'No Content',
-                    headers: {
-                        'access-control-allow-origin': { value: '*' },
-                        'access-control-allow-methods': { value: 'GET, HEAD, OPTIONS' },
-                        'access-control-allow-headers': { value: '*' },
-                        'access-control-max-age': { value: '86400' }
-                    }
-                };
-            }
-
-            request.uri = request.uri.replace(/^\/<PATH_PATTERN>/, '') || '/';
-            return request;
-        }
-        ```
-
-5. In `webpack.config.js`, find `new webpack.EnvironmentPlugin` and set `PUBLIC_PATH` to the path where the app will be hosted (default `/data/`).
-6. Edit `./src/js/bucketEndpoints.js`:
-  * **`bucketEndpoints`**: Each object key is the bucket label in the UI (bucket list and links). Each value needs **`URL`** (origin base for listing requests—typically your CloudFront hostname, e.g. `https://d1234567890abc.cloudfront.net`, or an S3 REST endpoint).
-  * **`listingUrlPathPrefix`** (for CloudFront path-style / `appendPathToUrl` not `false`): Path segment matched by your distribution behavior, used in listing URLs and at the start of hash routes (prefer a trailing `/`). Omit for direct virtual-hosted bucket access (`appendPathToUrl: false`); use **`deepLinkPath`** alone for the hash and S3 prefix root in that case.
-  * **`deepLinkPath`** (optional): Path under the listing base without repeating `listingUrlPathPrefix`. With path-style listing, it becomes the S3 `prefix` at browse root. With `appendPathToUrl: false` and no `listingUrlPathPrefix`, it is the sole browse hash root and ListBucket prefix. See `getMissionBrowsePath` in `bucketEndpoints.js`.
-  * **`appendPathToUrl`** (optional on each bucketEndpoint): Defaults to `true`. When `true`, the app requests listings at `URL` with `listingUrlPathPrefix` in the path (typical CloudFront behavior URL). When `false`, the app uses `URL` as-is and sends the full browse path (`getMissionBrowsePath`: optional `listingUrlPathPrefix` + optional `deepLinkPath`, plus subfolders) via the `prefix` query parameter (virtual-hosted S3).
-  * **`exclude_prefixes`**: Prefix strings to omit from file rows in directory listings (see `bucketEndpoints.js` for the export used by the listing code).
-7. Run `npm run build` and upload `dist/` to the app bucket.
-
-**Note**: Prefer `npm ci` for installs from a locked tree. Use `npm install` only when you intend to change dependency versions in `package.json`.
-
-### Local Development
-
-1. Clone this repository and `cd` into it.
-2. Run `nvm use`.
-3. Run `npm ci` or `npm install` if the package.json file is missing.
-4. Edit dev server port in webpack.config.js to an available port on your localhost. Under plugins -> devServer -> `port: 9002`.
-5. Run `npm run start`.
-6. Open a browser and go to `localhost:9002` or `localhost:<port>`.
-
+1. `cd terraform`
+2. There are 3 backends that can be used -dev, -test, -prod. Run `terraform init -backend-config=backend-dev.hcl -lock=false` replacing `backend-dev.hcl` with the the correct environment.
+3. If changing backend after init was already run add -reconfigure. ` terraform init -reconfigure -backend-config=backend-dev.hcl -lock=false` 
+4. Update the terraform.tfvars file with the expected values.
+5. `terraform validate`
+6. Plan the changes `terraform plan -var-file=terraform.tfvars -lock=false` review the output to make sure the changes are expected.
+7. Run `terraform apply -var-file=terraform.tfvars -lock=false` to apply the changes.
+8. Login to the AWS Console with your AWS Account. Verify that the s3-bucket was created.
+9. Upload the distribution code in the /dist file from the build step into the s3-bucket.
+10. Run the cloudfront terraform at https://github.com/NASA-PDS/pds-mcp-infra/tree/main/terraform/cloudfront It will create the cloudfront environment and attach a policy to the s3 bucket that allows cloudfront to serve it.
