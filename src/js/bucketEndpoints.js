@@ -58,14 +58,14 @@ export function getBucketEndpointBrowsePath(bucketEndpoint) {
 }
 
 export const bucketEndpoints = {
-    "Catalina Sky Survey": {
+    "open-data-registry": {
         "URL": "https://pds-css-archive.s3.us-west-2.amazonaws.com",
         "deepLinkPath": "sbn/gbo.ast.catalina.survey/",
         "appendPathToUrl": false
     },
-    "lroc": {
+    "img": {
         "listingUrlPathPrefix": "data/store/img/",
-        "deepLinkPath": "lunar_reconnaissance_orbiter/pds4/lroc/lro-l-lroc-2-edr/",
+        "deepLinkPath": "",
         "URL": "https://pds-sit.mcp.nasa.gov"
     }
 };
