@@ -57,6 +57,16 @@ export function getBucketEndpointBrowsePath(bucketEndpoint) {
     return base.replace(/\/$/, '') + '/' + deep;
 }
 
+/**
+ * Scheme and host for the page serving this app (no path). Use when a bucket endpoint's listing
+ * origin is the same site or CloudFront distribution as the UI.
+ *
+ * @returns {string}
+ */
+export function getSiteOriginUrl() {
+    return location.protocol + '//' + location.host;
+}
+
 export const bucketEndpoints = {
     "open-data-registry": {
         "URL": "https://pds-css-archive.s3.us-west-2.amazonaws.com",
@@ -66,7 +76,7 @@ export const bucketEndpoints = {
     "img": {
         "listingUrlPathPrefix": "data/store/img/",
         "deepLinkPath": "",
-        "URL": "https://pds-sit.mcp.nasa.gov"
+        "URL": getSiteOriginUrl()
     }
 };
 
