@@ -51,7 +51,7 @@ function isAtAppRoot() {
         pathname === base ||
         pathname === base + '/' ||
         pathname === base + '/index.html';
-    // Local dev: page is often served at / or /index.html while PUBLIC_PATH still matches deploy (e.g. /s3app-an/).
+    // Local dev: page is often served at / or /index.html while PUBLIC_PATH still matches deploy (e.g. /data/).
     var atDevServerRoot = pathname === '/' || pathname === '/index.html';
     if (!atConfiguredBase && !atDevServerRoot) return false;
     var hash = (location.hash || '').replace(/^#\/?/, '');

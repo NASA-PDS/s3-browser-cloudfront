@@ -61,6 +61,16 @@ module.exports = (env = {}) => {
                 index: '/data/index.html',
             },
 
+            // Local dev: img listings and downloads use getSiteOriginUrl(); proxy the CloudFront
+            // behavior path to SIT when it is not available on localhost.
+            proxy: [
+                {
+                    context: ['/data/store/img'],
+                    target: 'https://pds-sit.mcp.nasa.gov',
+                    changeOrigin: true,
+                },
+            ],
+
             // 🔥 Prevent warning overlays from blocking your app
             client: {
                 overlay: {
