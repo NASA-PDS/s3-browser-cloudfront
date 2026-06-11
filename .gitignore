@@ -69,6 +69,7 @@ var/
 *.swp
 bin/
 typescript
+.vscode
 
 # macOS specific stuff
 .DS_Store
@@ -108,3 +109,9 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Ignore contents of dist directory
+dist/
+
+# Webpack development output (avoids serving raw src/index.html over generated HTML)
+.webpack-dev/

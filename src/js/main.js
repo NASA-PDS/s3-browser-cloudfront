@@ -16,29 +16,92 @@ import * as bootstrap from 'bootstrap';
 import './utils';
 import './error';
 
-import { missions } from './missions.js';
+import { bucketEndpoints, getBucketEndpointBrowsePath } from './bucketEndpoints.js';
+import getS3Data, { getAppBaseUrl, getCurrentPath, getBucketEndpointMatchForPath } from './list';
+
+var SUBDIRS = [];
+$.each( bucketEndpoints, function( key, value ) {
+    SUBDIRS.push(getBucketEndpointBrowsePath(value));
+});
+
+// Redirect to index.html so the app is always served (S3/CloudFront without static hosting).
+(function () {
+    var pathname = location.pathname;
+    var base = (process.env.PUBLIC_PATH || '/').replace(/\/$/, '');
+    if (pathname === base || pathname === base + '/') {
+        location.replace(getAppBaseUrl());
+        return;
+    }
+    if (!pathname.endsWith('index.html') && pathname.indexOf(base) === 0) {
+        var path = pathname.slice(pathname.indexOf(base) + base.length).replace(/^\/+/, '');
+        if (path) {
+            location.replace(getAppBaseUrl() + '#/' + path);
+            return;
+        }
+    }
+})();
 
 // Show the <main>
 $("main").show();
 
-if (location.pathname == process.env.PUBLIC_PATH){
-    $.each( missions, function( key, value ) {
-        var items = [];
-        $( ".bucketlist").append("<tr class='even'> <th scope='row'><div class='position-relative'><i class='fa-fw fas fa-folder' title='Directory' aria-hidden='true'></i><span class='sr-only'>(Directory)</span><a href='" + process.env.PUBLIC_PATH + value.Path + "' class='stretched-link'></a></div></th><td class='name'> <div class='position-relative'> <a href='" + process.env.PUBLIC_PATH + value.Path + "' class='stretched-link'>" + key + "</a></div></td></tr>" );
-        });
+function isAtAppRoot() {
+    var pathname = location.pathname;
+    var base = (process.env.PUBLIC_PATH || '/').replace(/\/$/, '');
+    var atConfiguredBase =
+        pathname === base ||
+        pathname === base + '/' ||
+        pathname === base + '/index.html';
+    // Local dev: page is often served at / or /index.html while PUBLIC_PATH still matches deploy (e.g. /data/).
+    var atDevServerRoot = pathname === '/' || pathname === '/index.html';
+    if (!atConfiguredBase && !atDevServerRoot) return false;
+    var hash = (location.hash || '').replace(/^#\/?/, '');
+    return !hash;
 }
 
+/**
+ * Rebuild the initial bucket-list HTML inside #files, then populate it.
+ * Necessary because getS3Data() replaces all of #files, so the .bucketlist
+ * tbody no longer exists after navigating into a directory.
+ */
+function renderBucketList() {
+    $('#files').html(
+        '<div class="grid-col-4 padding-5">' +
+        '<nav aria-label="Side navigation,">' +
+        '<table class="table table-hover">' +
+        '<tbody class="bucketlist"></tbody>' +
+        '</table></nav></div>'
+    );
+    $.each( bucketEndpoints, function( key, value ) {
+        var href = getAppBaseUrl() + '#/' + getBucketEndpointBrowsePath(value);
+        $( ".bucketlist").append(
+            "<tr class='even'><th scope='row'><div class='position-relative'>" +
+            "<i class='fa-fw fas fa-folder' title='Directory' aria-hidden='true'></i>" +
+            "<span class='visually-hidden'>(Directory)</span>" +
+            "<a href='" + href + "' class='stretched-link'></a></div></th>" +
+            "<td class='name'><div class='position-relative'>" +
+            "<a href='" + href + "' class='stretched-link'>" + key + "</a></div></td></tr>"
+        );
+    });
+}
 
-var SUBDIRS = [];
-$.each( missions, function( key, value ) {
-    SUBDIRS.push(value.Path);
-});
-
-
-import getS3Data from './list';
-$(function() {
-    if (SUBDIRS.some(w => location.pathname.includes(w))) {
+function handleRoute() {
+    if (isAtAppRoot()) {
+        $('.breadcrumb').html('');
+        renderBucketList();
+    } else if (getBucketEndpointMatchForPath(getCurrentPath())) {
+        $('.breadcrumb').html('');
+        $('#files').html('');
         getS3Data();
     }
+}
+
+// Initial render on page load
+$(function() {
+    handleRoute();
+});
+
+// Re-render whenever the hash changes (same-page navigation — no full reload)
+$(window).on('hashchange', function() {
+    handleRoute();
 });
 

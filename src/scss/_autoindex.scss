@@ -1,61 +1,67 @@
+@use "bootstrap" as b;
+@use "variables" as v;
+
 // Add same margins between the navbar, the breadcrumb and the table.
 .breadcrumb {
-	margin-top: $breadcrumb-margin-bottom;
+    margin-top: v.$breadcrumb-margin-bottom;
 }
 
 .table {
-	// Disable wrapping for all cells as responsive table is used
-	td,
-	th {
-		@extend .text-nowrap;
-	}
+    td,
+    th {
+        @extend .text-nowrap;
+    }
 
-	// Links and texts have the same color
-	a {
-		@extend .text-reset;
-	}
+    a {
+        @extend .text-reset;
+    }
 
-	// Directory icons are highlighted
-	.fa-folder {
-		@extend .text-primary;
-	}
+    .fa-folder {
+        @extend .text-primary;
+    }
 
-	// Expand the "Name" column
-	tbody td:nth-child(2),
-	thead th:nth-child(2) {
-		@extend .w-100;
-	}
+    tbody td:nth-child(2),
+    thead th:nth-child(2) {
+        @extend .w-100;
+    }
 
-	// Center the "Last modified" and "Size" column
-	tbody td:nth-child(n+3),
-	thead th:nth-child(n+3) {
-		@extend .text-center;
-	}
+    tbody td:nth-child(n+3),
+    thead th:nth-child(n+3) {
+        @extend .text-center;
+    }
 
-	// Stretched link wrapper padding
-	tbody td,
-	tbody th {
-		@extend .p-0;
+    tbody td,
+    tbody th {
+        @extend .p-0;
 
-		.position-relative {
-			padding: $table-cell-padding-y $table-cell-padding-x;
-		}
-	}
+        .position-relative {
+            padding: b.$table-cell-padding-y b.$table-cell-padding-x;
+        }
+    }
 
-	// Stretched link full height
-	// https://stackoverflow.com/a/3542470/2893600
-	tbody td,
-	tbody th {
-		min-height: 1px;
+    tbody td,
+    tbody th {
+        min-height: 1px;
 
-		.position-relative {
-			@extend .h-100;
-		}
-	}
+        .position-relative {
+            @extend .h-100;
+        }
+    }
 
-	// Increase spacing between the columns
-	tbody td:not(:first-child) .position-relative,
-	thead th:not(:first-child) {
-		padding-left: 2 * $table-cell-padding-x;
-	}
+    tbody td:not(:first-child) .position-relative,
+    thead th:not(:first-child) {
+        padding-left: 2 * b.$table-cell-padding-x;
+    }
+
+    &.sortable a.sortheader {
+        display: inline-flex;
+        align-items: center;
+        column-gap: 0.35em;
+    }
+
+    &.sortable a.sortheader .sortarrow {
+        display: flex;
+        align-items: center;
+        line-height: 0;
+    }
 }

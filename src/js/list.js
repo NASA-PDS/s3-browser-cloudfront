@@ -3,30 +3,156 @@ import { render } from "./autoindex";
 
 import DOMPurify from 'isomorphic-dompurify';
 
-import {missions, exclude_prefixes} from './missions.js';
+import {bucketEndpoints, exclude_prefixes, getBucketEndpointBrowsePath} from './bucketEndpoints.js';
 
 var S3BL_IGNORE_PATH = false;
-var BUCKET_URL = 'https://d1z62tir4fw0q0.cloudfront.net';
+
+/**
+ * Base URL that always serves the app (S3/CloudFront without static hosting requires index.html in path).
+ */
+export function getAppBaseUrl() {
+    const origin = location.protocol + '//' + location.host;
+    const basePath = (process.env.PUBLIC_PATH || '/').replace(/\/$/, '');
+    return origin + basePath + '/index.html';
+}
+
+/**
+ * Current browse path (used for S3 prefix and for building links).
+ * When the app is served from index.html, path is taken from the hash (#/peer-review-data/sub/).
+ * Otherwise uses pathname for backward compatibility.
+ */
+export function getCurrentPath() {
+    const pathname = location.pathname;
+    const publicPathNorm = (process.env.PUBLIC_PATH || '/').replace(/^\//, '').replace(/\/$/, '');
+    if (pathname.endsWith('index.html')) {
+        const hashPath = (location.hash || '').replace(/^#\/?/, '');
+        return hashPath; // may be '' or 'peer-review-data/subfolder/'
+    }
+    // Legacy: pathname-based (e.g. /peer-review-app/peer-review-data/sub/)
+    let p = pathname.replace(/^\/+/, '');
+    if (publicPathNorm && p.indexOf(publicPathNorm) === 0) {
+        p = p.slice(publicPathNorm.length).replace(/^\/+/, '');
+    }
+    return p;
+}
+
+/** Normalize browse paths so prefix checks are consistent (leading slashes trimmed, trailing slash added). */
+export function normalizeBrowsePath(p) {
+    if (!p) return '';
+    var s = String(p).replace(/^\/+/, '');
+    if (!s.endsWith('/')) {
+        s += '/';
+    }
+    return s;
+}
 
 var SUBDIRS = [];
-$.each( missions, function( key, value ) {
-    SUBDIRS.push(value.Path);
+$.each( bucketEndpoints, function( key, value ) {
+    SUBDIRS.push(getBucketEndpointBrowsePath(value));
 });
 
-var BUCKET_URL = '';
-$.each( missions, function( key, value ) {
-    if (location.pathname.includes(value.Path)){
-        BUCKET_URL = value.URL;
+/** URL path segment for path-style listing requests (CloudFront behavior path). */
+function normalizeListingUrlPathPrefix(mission) {
+    if (!mission || !mission.listingUrlPathPrefix) return '';
+    return normalizeBrowsePath(mission.listingUrlPathPrefix);
+}
+
+/** S3 ?prefix= at mission browse root for path-style listings (keys under listingUrlPathPrefix). */
+function getS3RootPrefixForMission(mission) {
+    if (!mission || mission.appendPathToUrl === false) return '';
+    return normalizeBrowsePath(mission.deepLinkPath || '');
+}
+
+/**
+ * Longest browse-path-prefix mission matching currentPath (hash or pathname browse segment).
+ */
+export function getBucketEndpointMatchForPath(currentPathRaw) {
+    var norm = normalizeBrowsePath(currentPathRaw);
+    var best = null;
+    var bestLen = -1;
+    $.each(bucketEndpoints, function(key, value) {
+        var mp = normalizeBrowsePath(getBucketEndpointBrowsePath(value));
+        if (!mp) return;
+        if (norm === mp || norm.indexOf(mp) === 0) {
+            if (mp.length > bestLen) {
+                bestLen = mp.length;
+                best = { key: key, value: value };
+            }
+        }
+    });
+    return best;
+}
+
+/**
+ * Parent browse path for hash routing, or null when leaving mission root (→ bucket list).
+ */
+function getBrowseParentPath(currentPathRaw) {
+    var cur = normalizeBrowsePath(currentPathRaw);
+    var match = getBucketEndpointMatchForPath(currentPathRaw);
+    if (match) {
+        var mp = normalizeBrowsePath(getBucketEndpointBrowsePath(match.value));
+        if (cur === mp) {
+            return null;
+        }
+        var rel = cur.slice(mp.length).replace(/\/$/, '');
+        var relParts = rel.split('/').filter(Boolean);
+        relParts.pop();
+        var newRel = relParts.length ? relParts.join('/') + '/' : '';
+        return mp.replace(/\/$/, '') + '/' + newRel;
     }
-});
+    var parts = cur.replace(/\/$/, '').split('/').filter(Boolean);
+    parts.pop();
+    return parts.length ? parts.join('/') + '/' : '';
+}
+
+var BUCKET_URL = '';
+
+/** Mission entry matching the current route (set in resolveBucketUrl). */
+var CURRENT_MISSION = null;
+
+/**
+ * (Re-)determine the bucket URL for the current browse path.
+ * Called at module load and again at the start of each top-level getS3Data() call
+ * so that hash-based navigation (no full page reload) always uses the right bucket.
+ */
+function resolveBucketUrl() {
+    CURRENT_MISSION = null;
+    BUCKET_URL = '';
+    var cp = getCurrentPath();
+    var match = getBucketEndpointMatchForPath(cp);
+    if (!match) {
+        $.each(bucketEndpoints, function(key, value) {
+            var needle = getBucketEndpointBrowsePath(value).replace(/\/$/, '');
+            if (needle && location.pathname.indexOf(needle) >= 0) {
+                var candLen = normalizeBrowsePath(getBucketEndpointBrowsePath(value)).length;
+                if (!match || candLen > normalizeBrowsePath(getBucketEndpointBrowsePath(match.value)).length) {
+                    match = { key: key, value: value };
+                }
+            }
+        });
+    }
+    if (!match) {
+        return;
+    }
+    CURRENT_MISSION = match.value;
+    var appendPath = match.value.appendPathToUrl !== false;
+    if (appendPath) {
+        // CloudFront / path-style: URL path must be the behavior prefix only. Omitting listingUrlPathPrefix
+        // with appendPathToUrl true falls back to full browse path (legacy); direct buckets use append false.
+        var pathForUrl = normalizeListingUrlPathPrefix(match.value);
+        if (!pathForUrl) {
+            pathForUrl = normalizeBrowsePath(getBucketEndpointBrowsePath(match.value));
+        }
+        BUCKET_URL = match.value.URL.replace(/\/$/, '') + '/' + pathForUrl.replace(/\/$/, '');
+    } else {
+        BUCKET_URL = match.value.URL.replace(/\/$/, '');
+    }
+}
+resolveBucketUrl();
 
 
 if (typeof S3BL_IGNORE_PATH == 'undefined' || S3BL_IGNORE_PATH!=true) {
     var S3BL_IGNORE_PATH = false;
-}
-
-if (typeof BUCKET_URL == 'undefined') {
-    var BUCKET_URL = new URL(location.protocol + '//' + location.hostname).href;
 }
 
 if (typeof BUCKET_NAME != 'undefined') {
@@ -42,6 +168,10 @@ if (typeof S3B_ROOT_DIR == 'undefined') {
 }
 
 function getS3Data(marker, table) {
+  // Re-resolve bucket URL on every fresh call so hash navigation always works.
+  if (!marker) {
+    resolveBucketUrl();
+  }
   var s3_rest_url = createS3QueryUrl(marker);
   
   // set loading notice
@@ -64,7 +194,7 @@ function getS3Data(marker, table) {
                 var tbody = table.children('tbody');
                 tbody.append(rows);
             }
-            if (info.nextMarker != null) {
+            if (info.nextMarker) {
                 getS3Data(info.nextMarker, table);
             } else {
                 $('#files').append(table);
@@ -86,58 +216,48 @@ function getS3Data(marker, table) {
 }
 
 function createS3QueryUrl(marker) {
-    var s3_rest_url = BUCKET_URL;
-    s3_rest_url += '?delimiter=/';
+    // Path-style (CF): BUCKET_URL is URL + listingUrlPathPrefix; ?prefix= carries deepLinkPath + subfolders.
+    // Direct bucket (appendPathToUrl false): BUCKET_URL is origin only; getMissionBrowsePath (often deepLinkPath
+    // only) + subfolders in &prefix=.
+    var s3_rest_url = BUCKET_URL.replace(/\/$/, '') + '/?delimiter=/';
 
-    //
-    // Handling paths and prefixes:
-    //
-    // 1. S3BL_IGNORE_PATH = false
-    // Uses the pathname
-    // {bucket}/{path} => prefix = {path}
-    //
-    // 2. S3BL_IGNORE_PATH = true
-    // Uses ?prefix={prefix}
-    //
-    // Why both? Because we want classic directory style files in normal
-    // buckets but also allow deploying to non-buckets
-    //
+    var currentPath = getCurrentPath();
+    if (currentPath && !currentPath.endsWith('/')) currentPath += '/';
 
-    // const search = location.search;
-    const search  = '';
-
-    var rx = '.*[?&]prefix=' + S3B_ROOT_DIR + '([^&]+)(&.*)?$';
-    var prefix = '';
-    if (S3BL_IGNORE_PATH==false) {
-        var prefix = location.pathname.replace(/^\//, S3B_ROOT_DIR);
-        SUBDIRS.some(w => {
-            var path = process.env.PUBLIC_PATH + w;
-            path = path.slice(1);
-
-            if (prefix.includes(path)) {
-                prefix = prefix.replace(path, "");
-            }
-        });  
-        if (exclude_prefixes.includes(prefix)) {
-            prefix = 'error';
+    var relativePrefix = currentPath;
+    if (CURRENT_MISSION) {
+        var mb = normalizeBrowsePath(getBucketEndpointBrowsePath(CURRENT_MISSION));
+        var cpn = normalizeBrowsePath(currentPath);
+        if (mb && cpn.indexOf(mb) === 0) {
+            relativePrefix = cpn.slice(mb.length);
         }
-
     }
 
-    var match = search.match(rx);
-    if (match) {
-        prefix = S3B_ROOT_DIR + match[1];
+    var prefixParam = '';
+    if (CURRENT_MISSION && CURRENT_MISSION.appendPathToUrl === false) {
+        var missionPrefix = getBucketEndpointBrowsePath(CURRENT_MISSION).replace(/\/$/, '');
+        if (relativePrefix) {
+            var rel = relativePrefix.replace(/\/$/, '');
+            prefixParam = missionPrefix + '/' + rel + '/';
+        } else {
+            prefixParam = missionPrefix + '/';
+        }
     } else {
-        if (S3BL_IGNORE_PATH) {
-            prefix = S3B_ROOT_DIR;
+        var s3Root = getS3RootPrefixForMission(CURRENT_MISSION);
+        var relOnly = relativePrefix.replace(/\/$/, '');
+        if (s3Root && relOnly) {
+            prefixParam = s3Root.replace(/\/$/, '') + '/' + relOnly + '/';
+        } else if (s3Root) {
+            prefixParam = s3Root.endsWith('/') ? s3Root : s3Root + '/';
+        } else if (relativePrefix) {
+            prefixParam = relativePrefix.replace(/\/$/, '') + '/';
         }
     }
-    if (prefix) {
-        // make sure we end in /
-        prefix = prefix.replace(/\/$/, '') + '/';
-        s3_rest_url += '&prefix=' + prefix;
+
+    if (prefixParam) {
+        s3_rest_url += '&prefix=' + prefixParam;
     }
-    
+
     if (marker) {
         s3_rest_url += '&marker=' + marker;
     }
@@ -146,11 +266,18 @@ function createS3QueryUrl(marker) {
 }
 
 function getInfoFromS3Data(xml) {
+    // The top-level <Prefix> is the query prefix S3 echoes back (e.g. "A/").
+    // S3 includes a zero-byte placeholder object whose Key equals that prefix —
+    // skip only that exact entry so deeper placeholders are unaffected.
+    var queryPrefix = $(xml.find('Prefix')[0]).text();
+
     var files = $.map(xml.find('Contents'), function(item) {
         item = $(item);
+        var key = item.find('Key').text();
+        if (key === queryPrefix) { return; }
         if (!exclude_prefixes.includes(item.find('Prefix').text())) {
             return {
-                Key: item.find('Key').text(),
+                Key: key,
                 LastModified: item.find('LastModified').text(),
                 Size: item.find('Size').text(),
                 Type: 'file'
@@ -172,7 +299,8 @@ function getInfoFromS3Data(xml) {
     });
 
     if ($(xml.find('IsTruncated')[0]).text() == 'true') {
-        var nextMarker = $(xml.find('NextMarker')[0]).text();
+        var nm = $(xml.find('NextMarker')[0]).text();
+        var nextMarker = nm || null;
     } else {
         var nextMarker = null;
     }
@@ -197,18 +325,10 @@ function appendRowstoTbody(info) {
             if (S3BL_IGNORE_PATH) {
                 item.href = new URL(location.protocol + '//' + location.hostname + location.pathname + '?prefix=' + item.Key).href;
             } else {
-                var href = $(location).attr("href");
-                
-                const urlObj = new URL(href);
-                urlObj.search = ''; urlObj.hash = '';
-                href = urlObj.href;  
-
-                if (href.substr(href.length - 1) == '/') {
-                    item.href = new URL(href + item.keyText).href;
-                } else {
-                    item.href = new URL(href + '/' + item.keyText).href;
-                }
-
+                var currentPath = getCurrentPath();
+                if (!currentPath.endsWith('/')) currentPath += '/';
+                var pathForLink = currentPath + item.keyText;
+                item.href = getAppBaseUrl() + '#/' + pathForLink;
             }
         } else {
             item.href = BUCKET_URL + '/' + item.Key;
@@ -241,48 +361,34 @@ function prepareTable(info) {
     var tbody = $("<tbody>");
 
     // add the ../ at the start of the directory files
+    var currentPathFull = getCurrentPath();
     if (prefix) {
-        var up = prefix.replace(/\/$/, '').split('/').slice(0, -1).concat('').join('/'); // one directory up
-        
-        var parent = $(location).attr("href");
+        var up = prefix.replace(/\/$/, '').split('/').slice(0, -1).concat('').join('/'); // one directory up (stripped)
 
-        const urlObj = new URL(parent);
-        urlObj.search = ''; urlObj.hash = '';
-        parent = urlObj.href;  
-
-        if (parent.substr(parent.length - 1) == '/') {
-            parent += "../";
+        var parentBrowse = getBrowseParentPath(currentPathFull);
+        var parentHref;
+        if (S3BL_IGNORE_PATH) {
+            parentHref = '?prefix=' + up;
+        } else if (parentBrowse === null) {
+            parentHref = getAppBaseUrl() + '#/';
         } else {
-            parent += "/../";
+            parentHref = getAppBaseUrl() + '#/' + parentBrowse;
         }
-
         var item = {
             Key: up,
             LastModified: '',
             Size: '',
             keyText: '../',
-            href: S3BL_IGNORE_PATH ? '?prefix=' + up : parent
+            href: parentHref
         };
 
     } else {
-        var up = $(location).attr("href");
-
-        const urlObj = new URL(up);
-        urlObj.search = ''; urlObj.hash = '';
-        up = urlObj.href;  
-
-        if (up.substr(up.length - 1) == '/') {
-            up += "../";
-        } else {
-            up += "/../";
-        }
-
         var item = {
             Key: 'up',
             LastModified: '',
             Size: '',
             keyText: '/',
-            href: up
+            href: getAppBaseUrl() + (location.pathname.endsWith('index.html') ? '#/' : '')
         };
     }
 
@@ -311,17 +417,10 @@ function prepareTable(info) {
             if (S3BL_IGNORE_PATH) {
                 item.href = new URL(location.protocol + '//' + location.hostname + location.pathname + '?prefix=' + item.Key).href;
             } else {
-                var href = $(location).attr("href");
-                
-                const urlObj = new URL(href);
-                urlObj.search = ''; urlObj.hash = '';
-                href = urlObj.href;  
-
-                if (href.substr(href.length - 1) == '/') {
-                    item.href = new URL(href + item.keyText).href;
-                } else {
-                    item.href = new URL(href + '/' + item.keyText).href;
-                }
+                var currentPath = getCurrentPath();
+                if (!currentPath.endsWith('/')) currentPath += '/';
+                var pathForLink = currentPath + item.keyText;
+                item.href = getAppBaseUrl() + '#/' + pathForLink;
             }
         } else {
             item.href = BUCKET_URL + '/' + item.Key;
@@ -348,7 +447,6 @@ function renderParentDirRecord(parentUrl) {
 
     const urlObj = new URL(parentUrl);
     urlObj.search = '';
-    urlObj.hash = '';
     parentUrl = urlObj.href;
     
     var td_icon = $("<td>", {'class' : 'name', 'valign' : 'top'});
@@ -384,11 +482,11 @@ function renderTableHeader() {
     headers.push(th_name);
 
     var th_modified = $("<th>", {'class' : 'date'});
-    th_modified.html('Last Modified&nbsp;&nbsp;');
+    th_modified.html('Last Modified');
     headers.push(th_modified);
 
     var th_size = $("<th>", {'class' : 'size'});
-    th_size.html('Size&nbsp;&nbsp;');
+    th_size.html('Size');
     headers.push(th_size);
 
     return headers;
@@ -404,11 +502,11 @@ function renderRow(item) {
     }
 
     const urlObj = new URL(item.href);
-    urlObj.search = ''; urlObj.hash = '';
+    urlObj.search = '';
     const item_href = urlObj.href;      
 
     var td_icon = $("<td>", {'class' : 'name', 'valign' : 'top'});
-    var clean = DOMPurify.sanitize('<a href="' + item_href + '"><img src="' + src + '" alt="' + alt + '" height="16" width="16"</a>');
+    var clean = DOMPurify.sanitize('<a href="' + item_href + '"><img src="' + src + '" alt="' + alt + '" height="16" width="16"></a>');
     td_icon.html(clean);
     records.push(td_icon);
 
