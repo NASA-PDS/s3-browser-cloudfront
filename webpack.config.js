@@ -110,6 +110,15 @@ module.exports = (env = {}) => {
                     }
                 },
 
+                // Plain CSS (e.g. Font Awesome)
+                {
+                    test: /\.css$/i,
+                    use: [
+                        MiniCssExtractPlugin.loader,
+                        'css-loader'
+                    ]
+                },
+
                 // SCSS Pipeline
                 {
                     test: /\.(scss)$/,
