@@ -16,14 +16,7 @@
 @use "error" as *;
 
 /* ============================================
-   4. Font Awesome
-   NOTE: FA7 SCSS no longer supports $fa-font-path properly,
-   so we use the CSS import instead (works best w/ Webpack).
-   ============================================ */
-@import "~@fortawesome/fontawesome-free/css/all.css";
-
-/* ============================================
-   5. Global Layout
+   4. Global Layout
    ============================================ */
 html,
 body {
@@ -44,7 +37,7 @@ body {
 }
 
 /* ============================================
-   6. NAVBAR RESTORATION
+   5. NAVBAR RESTORATION
    ============================================ */
 
 .navbar {
@@ -63,7 +56,7 @@ body {
 }
 
 /* ============================================
-   7. FOOTER RESTORATION (Old Design)
+   6. FOOTER RESTORATION (Old Design)
    ============================================ */
 
 footer {
@@ -158,7 +151,7 @@ p a.footerLinks:hover {
 }
 
 /* ============================================
-   8. NASA / JPL BRANDING BLOCK
+   7. NASA / JPL BRANDING BLOCK
    ============================================ */
 
 .brand_area {
@@ -256,7 +249,7 @@ a.site_logo:hover {
 }
 
 /* ============================================
-   9. THEMES DROPDOWN — Old layout
+   8. THEMES DROPDOWN — Old layout
    ============================================ */
 
 .dropdown-menu.show[aria-labelledby="themes"] {
@@ -281,7 +274,7 @@ a.site_logo:hover {
 }
 
 /* ============================================
-   10. MISC USER STYLES
+   9. MISC USER STYLES
    ============================================ */
 
 .topContainer {
