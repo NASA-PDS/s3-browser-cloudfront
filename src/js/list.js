@@ -185,7 +185,8 @@ function getS3Data(marker, table) {
         // $('#files').append(h2);
     
         var xml = $(data);
-               var info = getInfoFromS3Data(xml);
+        var info = getInfoFromS3Data(xml);
+        
         if (info.directories.length > 0 || info.files.length > 0) {
             if (table == null) {
                 table = prepareTable(info);
