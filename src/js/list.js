@@ -185,7 +185,8 @@ function getS3Data(marker, table) {
         // $('#files').append(h2);
     
         var xml = $(data);
-               var info = getInfoFromS3Data(xml);
+        var info = getInfoFromS3Data(xml);
+        
         if (info.directories.length > 0 || info.files.length > 0) {
             if (table == null) {
                 table = prepareTable(info);
@@ -195,12 +196,27 @@ function getS3Data(marker, table) {
                 tbody.append(rows);
             }
             if (info.nextMarker) {
-                getS3Data(info.nextMarker, table);
+                if (marker && info.nextMarker === marker) {
+                    console.error(
+                        'S3 listing pagination did not advance (marker=%s)',
+                        marker
+                    );
+                    $('#files').append(table);
+                    sortables_init();
+                    render(SUBDIRS);
+                    $('#files').append(
+                        '<p><strong>Warning:</strong> Could not load the complete directory listing ' +
+                        '(pagination did not advance). Some entries may be missing. ' +
+                        'Please contact the <a href="mailto:pds-operator@jpl.nasa.gov">PDS Operator</a> to report the issue.</p>'
+                    );
+                } else {
+                    getS3Data(info.nextMarker, table);
+                }
             } else {
                 $('#files').append(table);
                 sortables_init();
                 render(SUBDIRS);
-            } 
+            }
         }
 
 
