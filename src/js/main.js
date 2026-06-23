@@ -1,9 +1,9 @@
 // Font Awesome (plain CSS; imported here because FA7 SCSS no longer supports
 // $fa-font-path properly, and @import cannot follow @use rules in main.scss)
-import '@fortawesome/fontawesome-free/css/all.css'
+import '@fortawesome/fontawesome-free/css/all.css';
 
 // Import our CSS
-import '../scss/main.scss'
+import '../scss/main.scss';
 
 // Import JQuery. This will add the $ global variable 
 import './jquery-import';
