@@ -28,6 +28,10 @@ updates:
     directory: "/docker/" # Location of package manifests
     schedule:
       interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
     target-branch: "develop"
 
   - package-ecosystem: "terraform" # See documentation for possible values
