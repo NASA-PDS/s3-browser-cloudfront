@@ -22,6 +22,43 @@ Use the version in [`.nvmrc`](./.nvmrc). Install [Node.js](https://nodejs.org) d
 6. Run `npm run start`.
 7. Open a browser and go to `localhost:9002` or `localhost:<port>`.
 
+## Secret Detection
+
+This repository uses [`detect-secrets`](https://github.com/Yelp/detect-secrets) to prevent accidental credential commits. A `.secrets.baseline` file tracks known, audited findings.
+
+### Prerequisites
+
+```bash
+pip install detect-secrets~=1.5.0
+```
+
+Or install all script dependencies at once:
+
+```bash
+pip install -r scripts/requirements.txt
+```
+
+### Usage
+
+```bash
+# Regenerate baseline after adding/removing files with false positives
+scripts/detect_secrets_baseline.sh scan
+
+# Interactively audit any unreviewed findings in the baseline
+scripts/detect_secrets_baseline.sh audit
+
+# Check for new secrets vs the committed baseline (what CI runs)
+scripts/detect_secrets_baseline.sh
+```
+
+### Workflow
+
+1. Run `scripts/detect_secrets_baseline.sh scan` to generate/update `.secrets.baseline`.
+2. Run `scripts/detect_secrets_baseline.sh audit` to mark each detected item as a real secret or a false positive.
+3. Commit the updated `.secrets.baseline`.
+
+Add per-repo file exclusion patterns to `.detect-secrets-ignore` (one regex per line). The `scripts/detect_secrets_baseline.sh` script already excludes `node_modules`, `dist`, `build`, `.git`, and a few other standard paths.
+
 ## Deployment
 
 This application is designed to work in AWS. It needs an S3 bucket that holds the source code and a cloudfront to serve it. Any data bucket it is meant to read needs its own cloudfront set up. Terraform is used to create the s3-bucket and the cloudfront.
